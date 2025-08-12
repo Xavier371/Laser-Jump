@@ -6,6 +6,8 @@ const instructionsButton = document.getElementById('instructionsButton');
 const instructionsModal = document.getElementById('instructionsModal');
 const closeButton = document.getElementById('closeButton');
 
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 // Game constants
 const gridSize = 25; // The size of each grid cell
 const tileCount = 20; // The number of tiles in the grid
@@ -130,7 +132,8 @@ closeButton.addEventListener('click', () => {
 let touchStartX = null;
 let touchStartY = null;
 let isMoving = false;
-const touchMoveThreshold = 10; // Reduced for more sensitivity
+let touchTimer = null;
+const tapThreshold = 200; // ms
 const sideMargin = 0.25; // 25% of the canvas width for side controls
 
 canvas.addEventListener('touchstart', e => {
@@ -140,50 +143,50 @@ canvas.addEventListener('touchstart', e => {
     if (e.touches.length === 1) {
         const touch = e.touches[0];
         const rect = canvas.getBoundingClientRect();
-        const touchX = touch.clientX - rect.left;
-
-        if (touchX < rect.width * sideMargin) {
-            keys.ArrowLeft = true;
-            isMoving = true;
-        } else if (touchX > rect.width * (1 - sideMargin)) {
-            keys.ArrowRight = true;
-            isMoving = true;
-        } else {
-            // Jump if tapping in the middle
-            if (!player.isJumping) {
-                player.isJumping = true;
-                player.jumpStartTime = Date.now();
-                player.color = 'lightblue';
-            }
-        }
+        touchStartX = touch.clientX - rect.left;
+        touchStartY = touch.clientY - rect.top;
+        isMoving = true;
+        touchTimer = setTimeout(() => {
+            touchTimer = null; // Long press for movement
+        }, tapThreshold);
     }
 }, { passive: false });
 
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-    if (gameOver || paused || e.touches.length !== 1) return;
+    if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
 
     const touch = e.touches[0];
     const rect = canvas.getBoundingClientRect();
     const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
     
-    // Reset keys before setting them
-    keys.ArrowLeft = false;
-    keys.ArrowRight = false;
-    
-    if (touchX < rect.width * sideMargin) {
-        keys.ArrowLeft = true;
-        isMoving = true;
-    } else if (touchX > rect.width * (1 - sideMargin)) {
-        keys.ArrowRight = true;
-        isMoving = true;
+    const dx = touchX - touchStartX;
+    const dy = touchY - touchStartY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        keys.ArrowRight = dx > 0;
+        keys.ArrowLeft = dx < 0;
+        keys.ArrowUp = keys.ArrowDown = false;
     } else {
-        isMoving = false; // Stop if moved to the center
+        keys.ArrowDown = dy > 0;
+        keys.ArrowUp = dy < 0;
+        keys.ArrowLeft = keys.ArrowRight = false;
     }
+
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
+    if (touchTimer) {
+        clearTimeout(touchTimer);
+        // This was a tap, so jump
+        if (!player.isJumping) {
+            player.isJumping = true;
+            player.jumpStartTime = Date.now();
+            player.color = 'lightblue';
+        }
+    }
     isMoving = false;
     keys.ArrowUp = false;
     keys.ArrowDown = false;
