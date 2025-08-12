@@ -9,9 +9,10 @@ const closeButton = document.getElementById('closeButton');
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // Game constants
+const gameResolution = 500;
 const gridSize = 25; // The size of each grid cell
 const tileCount = 20; // The number of tiles in the grid
-canvas.width = canvas.height = gridSize * tileCount; // 500x500 canvas
+canvas.width = canvas.height = gameResolution; // Set internal resolution
 
 // Player
 let player = {
@@ -134,17 +135,25 @@ let touchStartY = null;
 let isMoving = false;
 let touchTimer = null;
 const tapThreshold = 200; // ms
-const sideMargin = 0.25; // 25% of the canvas width for side controls
+
+function scaleTouchCoordinates(touch) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (touch.clientX - rect.left) * scaleX,
+        y: (touch.clientY - rect.top) * scaleY
+    };
+}
 
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
     if (gameOver || paused) return;
 
     if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        const rect = canvas.getBoundingClientRect();
-        touchStartX = touch.clientX - rect.left;
-        touchStartY = touch.clientY - rect.top;
+        const touch = scaleTouchCoordinates(e.touches[0]);
+        touchStartX = touch.x;
+        touchStartY = touch.y;
         isMoving = true;
         touchTimer = setTimeout(() => {
             touchTimer = null; // Long press for movement
@@ -156,13 +165,10 @@ canvas.addEventListener('touchmove', e => {
     e.preventDefault();
     if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
 
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const touchX = touch.clientX - rect.left;
-    const touchY = touch.clientY - rect.top;
+    const touch = scaleTouchCoordinates(e.touches[0]);
     
-    const dx = touchX - touchStartX;
-    const dy = touchY - touchStartY;
+    const dx = touch.x - touchStartX;
+    const dy = touch.y - touchStartY;
 
     if (Math.abs(dx) > Math.abs(dy)) {
         keys.ArrowRight = dx > 0;
@@ -193,6 +199,25 @@ canvas.addEventListener('touchend', e => {
     keys.ArrowLeft = false;
     keys.ArrowRight = false;
 }, { passive: false });
+
+
+function resizeGame() {
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const container = document.getElementById('gameContainer');
+    const containerPadding = 20; // from body padding in CSS
+
+    // Determine the maximum size the container can be
+    const maxWidth = screenWidth - containerPadding;
+    const maxHeight = screenHeight - container.offsetTop - containerPadding;
+    
+    const size = Math.min(maxWidth, maxHeight, 500);
+
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+}
+
+window.addEventListener('resize', resizeGame);
 
 
 function checkCollisions() {
@@ -310,3 +335,4 @@ function draw() {
 }
 
 resetGame();
+resizeGame();
