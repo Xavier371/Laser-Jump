@@ -130,25 +130,26 @@ closeButton.addEventListener('click', () => {
 let touchStartX = null;
 let touchStartY = null;
 let isMoving = false;
-const touchMoveThreshold = 30; // Minimum distance to register a move
+const touchMoveThreshold = 10; // Reduced for more sensitivity
+const sideMargin = 0.25; // 25% of the canvas width for side controls
 
 canvas.addEventListener('touchstart', e => {
     e.preventDefault();
     if (gameOver || paused) return;
 
-    if (e.touches.length === 2) {
-        if (!player.isJumping) {
-            player.isJumping = true;
-            player.jumpStartTime = Date.now();
-            player.color = 'lightblue';
-        }
-        return;
-    }
-
     if (e.touches.length === 1) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        if (isMoving) {
+        const touch = e.touches[0];
+        const rect = canvas.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+
+        if (touchX < rect.width * sideMargin) {
+            keys.ArrowLeft = true;
+            isMoving = true;
+        } else if (touchX > rect.width * (1 - sideMargin)) {
+            keys.ArrowRight = true;
+            isMoving = true;
+        } else {
+            // Jump if tapping in the middle
             if (!player.isJumping) {
                 player.isJumping = true;
                 player.jumpStartTime = Date.now();
@@ -160,35 +161,29 @@ canvas.addEventListener('touchstart', e => {
 
 canvas.addEventListener('touchmove', e => {
     e.preventDefault();
-    if (gameOver || paused || !touchStartX || !touchStartY || e.touches.length !== 1) {
-        return;
-    }
+    if (gameOver || paused || e.touches.length !== 1) return;
 
-    const touchX = e.touches[0].clientX;
-    const touchY = e.touches[0].clientY;
-
-    const dx = touchX - touchStartX;
-    const dy = touchY - touchStartY;
-
-    if (Math.abs(dx) > Math.abs(dy)) { // Horizontal movement
-        if (Math.abs(dx) > touchMoveThreshold) {
-            keys.ArrowRight = dx > 0;
-            keys.ArrowLeft = dx < 0;
-            isMoving = true;
-        }
-    } else { // Vertical movement
-        if (Math.abs(dy) > touchMoveThreshold) {
-            keys.ArrowDown = dy > 0;
-            keys.ArrowUp = dy < 0;
-            isMoving = true;
-        }
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const touchX = touch.clientX - rect.left;
+    
+    // Reset keys before setting them
+    keys.ArrowLeft = false;
+    keys.ArrowRight = false;
+    
+    if (touchX < rect.width * sideMargin) {
+        keys.ArrowLeft = true;
+        isMoving = true;
+    } else if (touchX > rect.width * (1 - sideMargin)) {
+        keys.ArrowRight = true;
+        isMoving = true;
+    } else {
+        isMoving = false; // Stop if moved to the center
     }
 }, { passive: false });
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
-    touchStartX = null;
-    touchStartY = null;
     isMoving = false;
     keys.ArrowUp = false;
     keys.ArrowDown = false;
