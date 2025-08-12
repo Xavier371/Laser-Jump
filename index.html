@@ -7,13 +7,15 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Laser Jump</h1>
-    <div class="controls">
-        <button id="pauseButton">Pause</button>
-        <button id="instructionsButton">Instructions</button>
+    <div id="gameContainer">
+        <h1>Laser Jump</h1>
+        <div class="controls">
+            <button id="pauseButton">Pause</button>
+            <button id="instructionsButton">Instructions</button>
+        </div>
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <button id="restartButton" style="display: none;">Restart</button>
     </div>
-    <canvas id="gameCanvas" width="500" height="500"></canvas>
-    <button id="restartButton" style="display: none;">Restart</button>
 
     <div id="instructionsModal" style="display: none;">
         <div class="modal-content">
