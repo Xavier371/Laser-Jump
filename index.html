@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laser Jump</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Laser Jump</h1>
+    <div class="controls">
+        <button id="pauseButton">Pause</button>
+        <button id="instructionsButton">Instructions</button>
+    </div>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <button id="restartButton" style="display: none;">Restart</button>
+
+    <div id="instructionsModal" style="display: none;">
+        <div class="modal-content">
+            <span id="closeButton">&times;</span>
+            <h2>How to Play</h2>
+            <p><strong>Desktop:</strong></p>
+            <ul>
+                <li><strong>Arrow Keys:</strong> Move the blue dot.</li>
+                <li><strong>Spacebar:</strong> Jump over lasers.</li>
+                <li><strong>Enter/Space:</strong> Restart when the game is over.</li>
+                <li><strong>P:</strong> Pause/Resume the game.</li>
+            </ul>
+            <p><strong>Mobile:</strong></p>
+            <ul>
+                <li><strong>Tap and Hold:</strong> Tap and hold on the sides of the screen to move.</li>
+                <li><strong>Jump:</strong> Tap with two fingers, or tap once while moving.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
