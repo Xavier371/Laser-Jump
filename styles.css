@@ -68,3 +68,25 @@ canvas {
     text-decoration: none;
     cursor: pointer;
 }
+
+@media (max-width: 550px) {
+    body {
+        height: auto;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    h1 {
+        font-size: 1.5em;
+        margin-bottom: 5px;
+    }
+
+    .controls {
+        margin-bottom: 5px;
+    }
+
+    .controls button, #restartButton {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+}
