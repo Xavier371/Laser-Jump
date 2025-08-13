@@ -1,22 +1,25 @@
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    margin: 0;
     background-color: #f0f0f0;
     font-family: sans-serif;
-    overflow: hidden; /* Prevent scrolling */
 }
 
 #gameContainer {
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
 }
 
 .controls {
@@ -51,11 +54,17 @@ button:active {
 canvas {
     border: 2px solid black;
     background-color: #fff;
-    /* Sizing will be controlled by JavaScript */
+    width: 90vmin;
+    height: 90vmin;
+    max-width: 500px;
+    max-height: 500px;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 #restartButton {
-    margin-top: 20px;
+    margin-top: 15px;
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
