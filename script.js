@@ -19,8 +19,10 @@ canvas.width = canvas.height = gameResolution; // Set internal resolution
 let player = {
     x: gameResolution / 2,
     y: gameResolution / 2,
-    speed: 3,
     radius: gridSize / 2,
+    speed: 3,
+    vx: 0, // Velocity x
+    vy: 0, // Velocity y
     color: 'blue',
     isJumping: false,
     jumpStartTime: 0,
@@ -48,6 +50,8 @@ const moveDelay = 100; // ms
 function resetGame() {
     player.x = gameResolution / 2;
     player.y = gameResolution / 2;
+    player.vx = 0;
+    player.vy = 0;
     player.isJumping = false;
     player.color = 'blue';
 
@@ -229,22 +233,20 @@ if (isMobile) {
         const touch = scaleTouchCoordinates(e.touches[0]);
         const dx = touch.x - touchStartX;
         const dy = touch.y - touchStartY;
-        const angle = Math.atan2(dy, dx);
-        
-        keys.ArrowRight = Math.cos(angle) > 0.5;
-        keys.ArrowLeft = Math.cos(angle) < -0.5;
-        keys.ArrowDown = Math.sin(angle) > 0.5;
-        keys.ArrowUp = Math.sin(angle) < -0.5;
+        const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+        if (magnitude > 0) {
+            player.vx = (dx / magnitude) * player.speed;
+            player.vy = (dy / magnitude) * player.speed;
+        }
     }, { passive: false });
 
     canvas.addEventListener('touchend', e => {
         e.preventDefault();
         if (isMoving && e.touches.length === 0) {
             isMoving = false;
-            keys.ArrowUp = false;
-            keys.ArrowDown = false;
-            keys.ArrowLeft = false;
-            keys.ArrowRight = false;
+            player.vx = 0;
+            player.vy = 0;
         }
     }, { passive: false });
 }
@@ -319,6 +321,18 @@ function update() {
     if (keys.ArrowDown && player.y + player.radius < canvas.height) player.y += player.speed;
     if (keys.ArrowLeft && player.x - player.radius > 0) player.x -= player.speed;
     if (keys.ArrowRight && player.x + player.radius < canvas.width) player.x += player.speed;
+
+    // Apply velocity for mobile
+    if (isMobile) {
+        player.x += player.vx;
+        player.y += player.vy;
+
+        // Boundary checks for velocity-based movement
+        if (player.x - player.radius < 0) player.x = player.radius;
+        if (player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
+        if (player.y - player.radius < 0) player.y = player.radius;
+        if (player.y + player.radius > canvas.height) player.y = canvas.height - player.radius;
+    }
 
 
     // Move lasers
