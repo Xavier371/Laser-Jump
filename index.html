@@ -22,11 +22,7 @@
         }
 
         #game-enclosure {
-            padding: 30px;
-            background-color: #ffffff;
-            border: 2px solid #333;
-            box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            border-radius: 20px;
+            /* This is now an invisible container for centering */
             text-align: center;
         }
 
@@ -155,7 +151,7 @@
             x: gameResolution / 2,
             y: gameResolution / 2,
             radius: gridSize / 2,
-            speed: 3,
+            speed: 4,      // Increased base speed
             vx: 0,
             vy: 0,
             color: 'blue',
@@ -329,7 +325,6 @@
                 e.preventDefault();
                 if (gameOver || paused) return;
 
-                // If we are already moving, any new touch is a jump
                 if (isMoving) {
                     if (!player.isJumping) {
                         player.isJumping = true;
@@ -339,7 +334,6 @@
                     return;
                 }
 
-                // If not moving, the first touch initiates movement
                 if (e.touches.length === 1) {
                     const touch = e.changedTouches[0];
                     touchId = touch.identifier;
@@ -349,7 +343,6 @@
                     isMoving = true;
                 }
                 
-                // If two fingers touch down at the same time, it's also a jump
                 if (e.touches.length === 2 && !isMoving) {
                      if (!player.isJumping) {
                         player.isJumping = true;
@@ -377,10 +370,10 @@
                 const dx = coords.x - touchStartX;
                 const dy = coords.y - touchStartY;
                 const magnitude = Math.sqrt(dx * dx + dy * dy);
-                const deadzone = 10;
+                const deadzone = 5; // Smaller deadzone for quicker reaction
 
                 if (magnitude > deadzone) {
-                    const maxDrag = 100;
+                    const maxDrag = 60; // Reach max speed with a smaller drag
                     const speedFactor = Math.min(1, (magnitude - deadzone) / maxDrag);
                     const currentSpeed = player.speed * speedFactor;
 
