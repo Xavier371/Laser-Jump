@@ -8,18 +8,15 @@ html, body {
 
 body {
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: #f0f0f0;
     font-family: sans-serif;
+    text-align: center;
 }
 
 #gameContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    /* This container is now primarily for grouping elements */
 }
 
 .controls {
@@ -52,6 +49,8 @@ button:active {
 }
 
 canvas {
+    display: block;
+    margin: 0 auto 10px auto; /* Center canvas and add margin below */
     border: 2px solid black;
     background-color: #fff;
     width: 90vmin;
@@ -64,10 +63,7 @@ canvas {
 }
 
 #restartButton {
-    margin-top: 15px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
+    /* No longer needs special margins */
 }
 
 #instructionsModal {
