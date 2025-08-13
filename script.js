@@ -76,6 +76,15 @@ difficultyButton.addEventListener('click', () => {
     difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
 });
 
+window.addEventListener('click', e => {
+    if (e.target === instructionsModal) {
+        instructionsModal.style.display = 'none';
+        if (paused) {
+            togglePause();
+        }
+    }
+});
+
 function startGame() {
     update();
 }
@@ -199,9 +208,17 @@ if (isMobile) {
 
         if (e.touches.length === 1) {
             const touch = scaleTouchCoordinates(e.touches[0]);
-            touchStartX = touch.x;
-            touchStartY = touch.y;
-            isMoving = true;
+            if (isMoving) { // Tap while dragging to jump
+                if (!player.isJumping) {
+                    player.isJumping = true;
+                    player.jumpStartTime = Date.now();
+                    player.color = 'lightblue';
+                }
+            } else {
+                touchStartX = touch.x;
+                touchStartY = touch.y;
+                isMoving = true;
+            }
         }
     }, { passive: false });
 
