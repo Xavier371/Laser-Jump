@@ -57,12 +57,12 @@
 
         canvas {
             display: block;
+            margin: 0 auto 10px auto; /* Ensures perfect centering */
             width: 90vmin;
             height: 90vmin;
             max-width: 500px;
             max-height: 500px;
             border: 2px solid black;
-            margin-bottom: 10px;
         }
 
         #instructionsModal {
@@ -151,7 +151,7 @@
             x: gameResolution / 2,
             y: gameResolution / 2,
             radius: gridSize / 2,
-            speed: 4,      // Increased base speed
+            speed: 4,
             vx: 0,
             vy: 0,
             color: 'blue',
@@ -370,10 +370,10 @@
                 const dx = coords.x - touchStartX;
                 const dy = coords.y - touchStartY;
                 const magnitude = Math.sqrt(dx * dx + dy * dy);
-                const deadzone = 5; // Smaller deadzone for quicker reaction
+                const deadzone = 5; 
 
                 if (magnitude > deadzone) {
-                    const maxDrag = 60; // Reach max speed with a smaller drag
+                    const maxDrag = 60; 
                     const speedFactor = Math.min(1, (magnitude - deadzone) / maxDrag);
                     const currentSpeed = player.speed * speedFactor;
 
@@ -509,6 +509,8 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white'; // Explicitly set background to white every frame
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             ctx.fillStyle = player.color;
             ctx.beginPath();
