@@ -193,24 +193,15 @@ if (isMobile) {
                 player.jumpStartTime = Date.now();
                 player.color = 'lightblue';
             }
-            isMoving = false; // Stop movement on jump
+            isMoving = false;
             return;
         }
 
         if (e.touches.length === 1) {
             const touch = scaleTouchCoordinates(e.touches[0]);
-            if (isMoving) { // Tap while moving to jump
-                if (!player.isJumping) {
-                    player.isJumping = true;
-                    player.jumpStartTime = Date.now();
-                    player.color = 'lightblue';
-                }
-                isMoving = false;
-            } else {
-                touchStartX = touch.x;
-                touchStartY = touch.y;
-                isMoving = true;
-            }
+            touchStartX = touch.x;
+            touchStartY = touch.y;
+            isMoving = true;
         }
     }, { passive: false });
 
@@ -219,46 +210,27 @@ if (isMobile) {
         if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
 
         const touch = scaleTouchCoordinates(e.touches[0]);
-        
         const dx = touch.x - touchStartX;
         const dy = touch.y - touchStartY;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-            keys.ArrowRight = dx > 0;
-            keys.ArrowLeft = dx < 0;
-            keys.ArrowUp = keys.ArrowDown = false;
-        } else {
-            keys.ArrowDown = dy > 0;
-            keys.ArrowUp = dy < 0;
-            keys.ArrowLeft = keys.ArrowRight = false;
-        }
-
+        const angle = Math.atan2(dy, dx);
+        
+        keys.ArrowRight = Math.cos(angle) > 0.5;
+        keys.ArrowLeft = Math.cos(angle) < -0.5;
+        keys.ArrowDown = Math.sin(angle) > 0.5;
+        keys.ArrowUp = Math.sin(angle) < -0.5;
     }, { passive: false });
 
     canvas.addEventListener('touchend', e => {
         e.preventDefault();
-        isMoving = false;
-        keys.ArrowUp = false;
-        keys.ArrowDown = false;
-        keys.ArrowLeft = false;
-        keys.ArrowRight = false;
+        if (isMoving && e.touches.length === 0) {
+            isMoving = false;
+            keys.ArrowUp = false;
+            keys.ArrowDown = false;
+            keys.ArrowLeft = false;
+            keys.ArrowRight = false;
+        }
     }, { passive: false });
 }
-
-function resizeGame() {
-    const container = document.getElementById('gameContainer');
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
-    
-    let size = Math.min(containerWidth, containerHeight) - 40; // 20px padding on each side
-    if (size > 500) size = 500; // Max size
-
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-}
-
-window.addEventListener('resize', resizeGame);
-
 
 function checkCollisions() {
     // Player and coin
@@ -393,5 +365,4 @@ function draw() {
 }
 
 resetGame();
-resizeGame();
 runCountdown();
