@@ -4,7 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Laser Jump</title>
-    <link rel="stylesheet" href="style.css?v=THE_FINAL_VERSION">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        #game-enclosure {
+            padding: 20px;
+            background-color: #ffffff;
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: linear-gradient(145deg, #e6e6e6, #ffffff);
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px #cccccc, -2px -2px 5px #ffffff;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #d4d4d4, #f0f0f0);
+            box-shadow: 4px 4px 10px #b0b0b0, -4px -4px 10px #ffffff;
+        }
+
+        button:active {
+            background: #e0e0e0;
+            box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff;
+        }
+
+        canvas {
+            display: block;
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 500px;
+            max-height: 500px;
+            border: 2px solid black;
+            margin-bottom: 10px;
+        }
+
+        #instructionsModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        #closeButton {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #closeButton:hover,
+        #closeButton:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div id="game-enclosure">
@@ -34,6 +134,386 @@
         </div>
     </div>
 
-    <script src="script.js?v=THE_FINAL_VERSION"></script>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const restartButton = document.getElementById('restartButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const instructionsButton = document.getElementById('instructionsButton');
+        const difficultyButton = document.getElementById('difficultyButton');
+        const instructionsModal = document.getElementById('instructionsModal');
+        const closeButton = document.getElementById('closeButton');
+
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+        const gameResolution = 500;
+        const gridSize = 25;
+        const tileCount = 20;
+        canvas.width = canvas.height = gameResolution;
+
+        let player = {
+            x: gameResolution / 2,
+            y: gameResolution / 2,
+            radius: gridSize / 2,
+            speed: 3,
+            vx: 0,
+            vy: 0,
+            color: 'blue',
+            isJumping: false,
+            jumpStartTime: 0,
+            jumpDuration: 500,
+        };
+
+        let lasers = [];
+
+        let coin = {
+            x: 0,
+            y: 0,
+            radius: gridSize / 2,
+            color: 'gold'
+        };
+
+        let score = 0;
+        let gameOver = false;
+        let paused = false;
+        let hardMode = true;
+
+        let touchStartX = null;
+        let touchStartY = null;
+        let isMoving = false;
+
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+
+        function resetGame() {
+            player.x = gameResolution / 2;
+            player.y = gameResolution / 2;
+            player.vx = 0;
+            player.vy = 0;
+            player.isJumping = false;
+            player.color = 'blue';
+
+            lasers = [
+                { y: 50, vy: 1.5, height: 5, color: 'red' },
+                { x: 50, vx: 1.5, width: 5, color: 'red' }
+            ];
+
+            score = 0;
+            gameOver = false;
+            paused = false;
+            
+            spawnCoin();
+            restartButton.style.display = 'none';
+            pauseButton.textContent = 'Pause';
+        }
+
+        restartButton.addEventListener('click', () => {
+            resetGame();
+            startGame();
+        });
+
+        difficultyButton.addEventListener('click', () => {
+            hardMode = !hardMode;
+            difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
+        });
+
+        window.addEventListener('click', e => {
+            if (e.target === instructionsModal) {
+                instructionsModal.style.display = 'none';
+                if (paused) {
+                    togglePause();
+                }
+            }
+        });
+
+        function startGame() {
+            update();
+        }
+
+        function runCountdown() {
+            let count = 3;
+            function tick() {
+                draw();
+                
+                if (count > 0) {
+                    ctx.fillStyle = 'black';
+                    ctx.font = '120px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(count, canvas.width / 2, canvas.height / 2);
+                    
+                    count--;
+                    setTimeout(tick, 700);
+                } else {
+                    ctx.textBaseline = 'alphabetic';
+                    startGame();
+                }
+            }
+            tick();
+        }
+
+        function togglePause() {
+            paused = !paused;
+            pauseButton.textContent = paused ? 'Resume' : 'Pause';
+            if (!paused) {
+                update();
+            }
+        }
+
+        pauseButton.addEventListener('click', togglePause);
+        instructionsButton.addEventListener('click', () => {
+            paused = true;
+            pauseButton.textContent = 'Resume';
+            instructionsModal.style.display = 'block';
+        });
+        closeButton.addEventListener('click', () => {
+            instructionsModal.style.display = 'none';
+            if(paused) togglePause();
+        });
+
+        function spawnCoin() {
+            const padding = coin.radius * 2;
+            coin.x = padding + Math.random() * (canvas.width - padding * 2);
+            coin.y = padding + Math.random() * (canvas.height - padding * 2);
+        }
+
+        document.addEventListener('keydown', e => {
+            if (gameOver) {
+                if (e.key === 'Enter') {
+                    resetGame();
+                    startGame();
+                }
+                return;
+            }
+
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+
+            if (e.key === ' ' || e.key === 'Spacebar') {
+                if (!player.isJumping) {
+                    player.isJumping = true;
+                    player.jumpStartTime = Date.now();
+                    player.color = 'lightblue';
+                }
+            }
+
+            if (e.key === 'p' || e.key === 'P') {
+                togglePause();
+            }
+        });
+
+        document.addEventListener('keyup', e => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+
+        function scaleTouchCoordinates(touch) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
+            };
+        }
+
+        if (isMobile) {
+            canvas.addEventListener('touchstart', e => {
+                e.preventDefault();
+                if (gameOver || paused) return;
+
+                if (e.touches.length > 1) {
+                    if (!player.isJumping) {
+                        player.isJumping = true;
+                        player.jumpStartTime = Date.now();
+                        player.color = 'lightblue';
+                    }
+                    isMoving = false;
+                    return;
+                }
+
+                if (e.touches.length === 1) {
+                    if (isMoving) {
+                        if (!player.isJumping) {
+                            player.isJumping = true;
+                            player.jumpStartTime = Date.now();
+                            player.color = 'lightblue';
+                        }
+                    } else {
+                        const touch = scaleTouchCoordinates(e.touches[0]);
+                        touchStartX = touch.x;
+                        touchStartY = touch.y;
+                        isMoving = true;
+                    }
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
+
+                const touch = scaleTouchCoordinates(e.touches[0]);
+                const dx = touch.x - touchStartX;
+                const dy = touch.y - touchStartY;
+                const magnitude = Math.sqrt(dx * dx + dy * dy);
+
+                if (magnitude > 0) {
+                    player.vx = (dx / magnitude) * player.speed;
+                    player.vy = (dy / magnitude) * player.speed;
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', e => {
+                e.preventDefault();
+                if (isMoving && e.touches.length === 0) {
+                    isMoving = false;
+                    player.vx = 0;
+                    player.vy = 0;
+                }
+            }, { passive: false });
+        }
+
+        function checkCollisions() {
+            const dx = player.x - coin.x;
+            const dy = player.y - coin.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < player.radius + coin.radius) {
+                score++;
+                spawnCoin();
+                
+                if (hardMode) {
+                    if (score % 2 !== 0) {
+                        lasers.push({ 
+                            y: player.y < canvas.height / 2 ? canvas.height - 5 : 0,
+                            vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                            height: 5, 
+                            color: 'red' 
+                        });
+                    } else {
+                        lasers.push({ 
+                            x: player.x < canvas.width / 2 ? canvas.width - 5 : 0,
+                            vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                            width: 5, 
+                            color: 'red' 
+                        });
+                    }
+                }
+            }
+
+            if (player.isJumping) return;
+
+            const playerPixelX = player.x;
+            const playerPixelY = player.y;
+
+            lasers.forEach(laser => {
+                if (gameOver) return;
+
+                if (laser.hasOwnProperty('vy')) {
+                    if (playerPixelY + player.radius > laser.y && playerPixelY - player.radius < laser.y + laser.height) {
+                        gameOver = true;
+                    }
+                } else if (laser.hasOwnProperty('vx')) {
+                    if (playerPixelX + player.radius > laser.x && playerPixelX - player.radius < laser.x + laser.width) {
+                        gameOver = true;
+                    }
+                }
+            });
+        }
+
+        function update() {
+            if (paused) {
+                return;
+            }
+            if (gameOver) {
+                ctx.fillStyle = 'black';
+                ctx.font = '50px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+                ctx.font = '20px Arial';
+                ctx.fillText('Press Enter to restart', canvas.width / 2, canvas.height / 2 + 40);
+                restartButton.style.display = 'block';
+                return;
+            }
+            requestAnimationFrame(update);
+
+            if (keys.ArrowUp && player.y - player.radius > 0) player.y -= player.speed;
+            if (keys.ArrowDown && player.y + player.radius < canvas.height) player.y += player.speed;
+            if (keys.ArrowLeft && player.x - player.radius > 0) player.x -= player.speed;
+            if (keys.ArrowRight && player.x + player.radius < canvas.width) player.x += player.speed;
+
+            if (isMobile) {
+                player.x += player.vx;
+                player.y += player.vy;
+
+                if (player.x - player.radius < 0) player.x = player.radius;
+                if (player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
+                if (player.y - player.radius < 0) player.y = player.radius;
+                if (player.y + player.radius > canvas.height) player.y = player.height - player.radius;
+            }
+
+            lasers.forEach(laser => {
+                if (laser.hasOwnProperty('vy')) {
+                    laser.y += laser.vy;
+                    if (laser.y + laser.height > canvas.height || laser.y < 0) {
+                        laser.vy *= -1;
+                    }
+                } else if (laser.hasOwnProperty('vx')) {
+                    laser.x += laser.vx;
+                    if (laser.x + laser.width > canvas.width || laser.x < 0) {
+                        laser.vx *= -1;
+                    }
+                }
+            });
+
+            if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration) {
+                player.isJumping = false;
+                player.color = 'blue';
+            }
+
+            checkCollisions();
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            lasers.forEach(laser => {
+                ctx.fillStyle = laser.color;
+                if (laser.hasOwnProperty('vy')) {
+                    ctx.fillRect(0, laser.y, canvas.width, laser.height);
+                } else if (laser.hasOwnProperty('vx')) {
+                    ctx.fillRect(laser.x, 0, laser.width, canvas.height);
+                }
+            });
+
+            ctx.fillStyle = coin.color;
+            ctx.beginPath();
+            ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Score: ' + score, 10, 25);
+        }
+
+        resetGame();
+        runCountdown();
+
+    </script>
 </body>
 </html>
