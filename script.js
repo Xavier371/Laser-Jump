@@ -152,12 +152,19 @@ canvas.addEventListener('touchstart', e => {
 
     if (e.touches.length === 1) {
         const touch = scaleTouchCoordinates(e.touches[0]);
-        touchStartX = touch.x;
-        touchStartY = touch.y;
-        isMoving = true;
-        touchTimer = setTimeout(() => {
-            touchTimer = null; // Long press for movement
-        }, tapThreshold);
+        const rect = canvas.getBoundingClientRect();
+        
+        if (touch.x < canvas.width / 2) { // Left side for movement
+            touchStartX = touch.x;
+            touchStartY = touch.y;
+            isMoving = true;
+        } else { // Right side for jump
+            if (!player.isJumping) {
+                player.isJumping = true;
+                player.jumpStartTime = Date.now();
+                player.color = 'lightblue';
+            }
+        }
     }
 }, { passive: false });
 
@@ -184,40 +191,12 @@ canvas.addEventListener('touchmove', e => {
 
 canvas.addEventListener('touchend', e => {
     e.preventDefault();
-    if (touchTimer) {
-        clearTimeout(touchTimer);
-        // This was a tap, so jump
-        if (!player.isJumping) {
-            player.isJumping = true;
-            player.jumpStartTime = Date.now();
-            player.color = 'lightblue';
-        }
-    }
     isMoving = false;
     keys.ArrowUp = false;
     keys.ArrowDown = false;
     keys.ArrowLeft = false;
     keys.ArrowRight = false;
 }, { passive: false });
-
-
-function resizeGame() {
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-    const container = document.getElementById('gameContainer');
-    const containerPadding = 20; // from body padding in CSS
-
-    // Determine the maximum size the container can be
-    const maxWidth = screenWidth - containerPadding;
-    const maxHeight = screenHeight - container.offsetTop - containerPadding;
-    
-    const size = Math.min(maxWidth, maxHeight, 500);
-
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-}
-
-window.addEventListener('resize', resizeGame);
 
 
 function checkCollisions() {
@@ -335,4 +314,3 @@ function draw() {
 }
 
 resetGame();
-resizeGame();
