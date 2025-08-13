@@ -3,6 +3,7 @@ const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
 const pauseButton = document.getElementById('pauseButton');
 const instructionsButton = document.getElementById('instructionsButton');
+const difficultyButton = document.getElementById('difficultyButton');
 const instructionsModal = document.getElementById('instructionsModal');
 const closeButton = document.getElementById('closeButton');
 
@@ -16,8 +17,9 @@ canvas.width = canvas.height = gameResolution; // Set internal resolution
 
 // Player
 let player = {
-    x: 10, // grid x position
-    y: 10, // grid y position
+    x: gameResolution / 2,
+    y: gameResolution / 2,
+    speed: 3,
     radius: gridSize / 2,
     color: 'blue',
     isJumping: false,
@@ -26,15 +28,12 @@ let player = {
 };
 
 // Lasers
-let lasers = [
-    { y: 50, vy: 1.5, height: 5, color: 'red' }, // Horizontal
-    { x: 50, vx: 1.5, width: 5, color: 'red' }   // Vertical
-];
+let lasers = [];
 
 // Coin
 let coin = {
-    x: 15, // grid x position
-    y: 15, // grid y position
+    x: 0,
+    y: 0,
     radius: gridSize / 2,
     color: 'gold'
 };
@@ -42,35 +41,71 @@ let coin = {
 let score = 0;
 let gameOver = false;
 let paused = false;
+let hardMode = true;
 let lastMoveTime = 0;
 const moveDelay = 100; // ms
 
 function resetGame() {
-    player.x = 10;
-    player.y = 10;
+    player.x = gameResolution / 2;
+    player.y = gameResolution / 2;
     player.isJumping = false;
     player.color = 'blue';
 
-    lasers[0].y = 50;
-    lasers[0].vy = 1.5;
-    lasers[1].x = 50;
-    lasers[1].vx = 1.5;
+    lasers = [
+        { y: 50, vy: 1.5, height: 5, color: 'red' }, // Horizontal
+        { x: 50, vx: 1.5, width: 5, color: 'red' }   // Vertical
+    ];
 
     score = 0;
     gameOver = false;
+    paused = false;
     
     spawnCoin();
     restartButton.style.display = 'none';
+    pauseButton.textContent = 'Pause';
+    // update(); // Removed to allow for countdown
+}
+
+restartButton.addEventListener('click', () => {
+    resetGame();
+    startGame();
+});
+
+difficultyButton.addEventListener('click', () => {
+    hardMode = !hardMode;
+    difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
+});
+
+function startGame() {
     update();
 }
 
-restartButton.addEventListener('click', resetGame);
+function runCountdown() {
+    let count = 3;
+    function tick() {
+        draw(); // Draw the initial game board
+        
+        if (count > 0) {
+            ctx.fillStyle = 'black';
+            ctx.font = '120px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(count, canvas.width / 2, canvas.height / 2);
+            
+            count--;
+            setTimeout(tick, 700); // Faster countdown
+        } else {
+            ctx.textBaseline = 'alphabetic'; // Reset for score drawing
+            startGame();
+        }
+    }
+    tick();
+}
 
 function spawnCoin() {
-    do {
-        coin.x = Math.floor(Math.random() * tileCount);
-        coin.y = Math.floor(Math.random() * tileCount);
-    } while (coin.x === player.x && coin.y === player.y);
+    const padding = coin.radius * 2;
+    coin.x = padding + Math.random() * (canvas.width - padding * 2);
+    coin.y = padding + Math.random() * (canvas.height - padding * 2);
 }
 
 const keys = {
@@ -82,13 +117,14 @@ const keys = {
 
 document.addEventListener('keydown', e => {
     if (gameOver) {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        if (e.key === 'Enter') {
             resetGame();
+            startGame();
         }
         return;
     }
 
-    if (e.key in keys) {
+    if (keys.hasOwnProperty(e.key)) {
         keys[e.key] = true;
     }
 
@@ -146,82 +182,132 @@ function scaleTouchCoordinates(touch) {
     };
 }
 
-canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    if (gameOver || paused) return;
+if (isMobile) {
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        if (gameOver || paused) return;
 
-    if (e.touches.length === 1) {
-        const touch = scaleTouchCoordinates(e.touches[0]);
-        const rect = canvas.getBoundingClientRect();
-        
-        if (touch.x < canvas.width / 2) { // Left side for movement
-            touchStartX = touch.x;
-            touchStartY = touch.y;
-            isMoving = true;
-        } else { // Right side for jump
+        if (e.touches.length > 1) { // Multi-touch for jumping
             if (!player.isJumping) {
                 player.isJumping = true;
                 player.jumpStartTime = Date.now();
                 player.color = 'lightblue';
             }
+            isMoving = false; // Stop movement on jump
+            return;
         }
-    }
-}, { passive: false });
 
-canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
+        if (e.touches.length === 1) {
+            const touch = scaleTouchCoordinates(e.touches[0]);
+            if (isMoving) { // Tap while moving to jump
+                if (!player.isJumping) {
+                    player.isJumping = true;
+                    player.jumpStartTime = Date.now();
+                    player.color = 'lightblue';
+                }
+                isMoving = false;
+            } else {
+                touchStartX = touch.x;
+                touchStartY = touch.y;
+                isMoving = true;
+            }
+        }
+    }, { passive: false });
 
-    const touch = scaleTouchCoordinates(e.touches[0]);
+    canvas.addEventListener('touchmove', e => {
+        e.preventDefault();
+        if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
+
+        const touch = scaleTouchCoordinates(e.touches[0]);
+        
+        const dx = touch.x - touchStartX;
+        const dy = touch.y - touchStartY;
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            keys.ArrowRight = dx > 0;
+            keys.ArrowLeft = dx < 0;
+            keys.ArrowUp = keys.ArrowDown = false;
+        } else {
+            keys.ArrowDown = dy > 0;
+            keys.ArrowUp = dy < 0;
+            keys.ArrowLeft = keys.ArrowRight = false;
+        }
+
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+        e.preventDefault();
+        isMoving = false;
+        keys.ArrowUp = false;
+        keys.ArrowDown = false;
+        keys.ArrowLeft = false;
+        keys.ArrowRight = false;
+    }, { passive: false });
+}
+
+function resizeGame() {
+    const container = document.getElementById('gameContainer');
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
     
-    const dx = touch.x - touchStartX;
-    const dy = touch.y - touchStartY;
+    let size = Math.min(containerWidth, containerHeight) - 40; // 20px padding on each side
+    if (size > 500) size = 500; // Max size
 
-    if (Math.abs(dx) > Math.abs(dy)) {
-        keys.ArrowRight = dx > 0;
-        keys.ArrowLeft = dx < 0;
-        keys.ArrowUp = keys.ArrowDown = false;
-    } else {
-        keys.ArrowDown = dy > 0;
-        keys.ArrowUp = dy < 0;
-        keys.ArrowLeft = keys.ArrowRight = false;
-    }
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+}
 
-}, { passive: false });
-
-canvas.addEventListener('touchend', e => {
-    e.preventDefault();
-    isMoving = false;
-    keys.ArrowUp = false;
-    keys.ArrowDown = false;
-    keys.ArrowLeft = false;
-    keys.ArrowRight = false;
-}, { passive: false });
+window.addEventListener('resize', resizeGame);
 
 
 function checkCollisions() {
     // Player and coin
-    if (player.x === coin.x && player.y === coin.y) {
+    const dx = player.x - coin.x;
+    const dy = player.y - coin.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance < player.radius + coin.radius) {
         score++;
         spawnCoin();
+        
+        if (hardMode) {
+            // Add a new laser
+            if (score % 2 !== 0) { // Add horizontal laser
+                lasers.push({ 
+                    y: player.y < canvas.height / 2 ? canvas.height - 5 : 0,
+                    vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                    height: 5, 
+                    color: 'red' 
+                });
+            } else { // Add vertical laser
+                lasers.push({ 
+                    x: player.x < canvas.width / 2 ? canvas.width - 5 : 0,
+                    vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                    width: 5, 
+                    color: 'red' 
+                });
+            }
+        }
     }
 
     if (player.isJumping) return;
 
-    const playerPixelX = player.x * gridSize + player.radius;
-    const playerPixelY = player.y * gridSize + player.radius;
+    const playerPixelX = player.x;
+    const playerPixelY = player.y;
 
-    // Player and horizontal laser
-    const hLaser = lasers[0];
-    if (playerPixelY + player.radius > hLaser.y && playerPixelY - player.radius < hLaser.y + hLaser.height) {
-        gameOver = true;
-    }
+    lasers.forEach(laser => {
+        if (gameOver) return;
 
-    // Player and vertical laser
-    const vLaser = lasers[1];
-    if (playerPixelX + player.radius > vLaser.x && playerPixelX - player.radius < vLaser.x + vLaser.width) {
-        gameOver = true;
-    }
+        if (laser.hasOwnProperty('vy')) { // Horizontal laser
+            if (playerPixelY + player.radius > laser.y && playerPixelY - player.radius < laser.y + laser.height) {
+                gameOver = true;
+            }
+        } else if (laser.hasOwnProperty('vx')) { // Vertical laser
+            if (playerPixelX + player.radius > laser.x && playerPixelX - player.radius < laser.x + laser.width) {
+                gameOver = true;
+            }
+        }
+    });
 }
 
 function update() {
@@ -234,39 +320,32 @@ function update() {
         ctx.textAlign = 'center';
         ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
         ctx.font = '20px Arial';
-        ctx.fillText('Press Enter or Space to restart', canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText('Press Enter to restart', canvas.width / 2, canvas.height / 2 + 40);
         restartButton.style.display = 'block';
         return;
     }
 
     // Player movement
-    if (Date.now() - lastMoveTime > moveDelay) {
-        if (keys.ArrowUp && player.y > 0) {
-            player.y--;
-            lastMoveTime = Date.now();
-        } else if (keys.ArrowDown && player.y < tileCount - 1) {
-            player.y++;
-            lastMoveTime = Date.now();
-        } else if (keys.ArrowLeft && player.x > 0) {
-            player.x--;
-            lastMoveTime = Date.now();
-        } else if (keys.ArrowRight && player.x < tileCount - 1) {
-            player.x++;
-            lastMoveTime = Date.now();
+    if (keys.ArrowUp && player.y - player.radius > 0) player.y -= player.speed;
+    if (keys.ArrowDown && player.y + player.radius < canvas.height) player.y += player.speed;
+    if (keys.ArrowLeft && player.x - player.radius > 0) player.x -= player.speed;
+    if (keys.ArrowRight && player.x + player.radius < canvas.width) player.x += player.speed;
+
+
+    // Move lasers
+    lasers.forEach(laser => {
+        if (laser.hasOwnProperty('vy')) { // It's a horizontal laser
+            laser.y += laser.vy;
+            if (laser.y + laser.height > canvas.height || laser.y < 0) {
+                laser.vy *= -1;
+            }
+        } else if (laser.hasOwnProperty('vx')) { // It's a vertical laser
+            laser.x += laser.vx;
+            if (laser.x + laser.width > canvas.width || laser.x < 0) {
+                laser.vx *= -1;
+            }
         }
-    }
-
-    // Move horizontal laser
-    lasers[0].y += lasers[0].vy;
-    if (lasers[0].y + lasers[0].height > canvas.height || lasers[0].y < 0) {
-        lasers[0].vy *= -1;
-    }
-
-    // Move vertical laser
-    lasers[1].x += lasers[1].vx;
-    if (lasers[1].x + lasers[1].width > canvas.width || lasers[1].x < 0) {
-        lasers[1].vx *= -1;
-    }
+    });
 
     // Handle jump
     if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration) {
@@ -287,23 +366,23 @@ function draw() {
     // Draw player
     ctx.fillStyle = player.color;
     ctx.beginPath();
-    const playerPixelX = player.x * gridSize + player.radius;
-    const playerPixelY = player.y * gridSize + player.radius;
-    ctx.arc(playerPixelX, playerPixelY, player.radius, 0, Math.PI * 2);
+    ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw lasers
-    ctx.fillStyle = lasers[0].color;
-    ctx.fillRect(0, lasers[0].y, canvas.width, lasers[0].height); // Horizontal
-    ctx.fillStyle = lasers[1].color;
-    ctx.fillRect(lasers[1].x, 0, lasers[1].width, canvas.height); // Vertical
+    lasers.forEach(laser => {
+        ctx.fillStyle = laser.color;
+        if (laser.hasOwnProperty('vy')) { // Horizontal
+            ctx.fillRect(0, laser.y, canvas.width, laser.height);
+        } else if (laser.hasOwnProperty('vx')) { // Vertical
+            ctx.fillRect(laser.x, 0, laser.width, canvas.height);
+        }
+    });
 
     // Draw coin
     ctx.fillStyle = coin.color;
     ctx.beginPath();
-    const coinPixelX = coin.x * gridSize + coin.radius;
-    const coinPixelY = coin.y * gridSize + coin.radius;
-    ctx.arc(coinPixelX, coinPixelY, coin.radius, 0, Math.PI * 2);
+    ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw score
@@ -314,3 +393,5 @@ function draw() {
 }
 
 resetGame();
+resizeGame();
+runCountdown();
