@@ -5,16 +5,21 @@ html, body {
     padding: 0;
     overflow: hidden;
     background-color: #f0f0f0;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-family: sans-serif;
 }
 
-#gameContainer {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90vmin;
-    max-width: 500px;
+#game-enclosure {
+    padding: 20px;
+    background-color: #ffffff;
+    border: 2px solid #333;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+    border-radius: 15px;
     text-align: center;
 }
 
@@ -49,15 +54,12 @@ button:active {
 
 canvas {
     display: block;
-    width: 100%;
-    height: auto;
+    width: 90vmin;
+    height: 90vmin;
+    max-width: 500px;
+    max-height: 500px;
     border: 2px solid black;
-    background-color: #fff;
     margin-bottom: 10px;
-}
-
-#restartButton {
-    /* No longer needs special margins */
 }
 
 #instructionsModal {
