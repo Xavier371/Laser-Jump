@@ -22,7 +22,11 @@
         }
 
         #game-enclosure {
-            /* This is now an invisible container for centering */
+            padding: 30px;
+            background-color: #ffffff;
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            border-radius: 20px;
             text-align: center;
         }
 
@@ -174,10 +178,6 @@
         let paused = false;
         let hardMode = true;
 
-        let touchStartX = null;
-        let touchStartY = null;
-        let isMoving = false;
-
         const keys = {
             ArrowUp: false,
             ArrowDown: false,
@@ -320,55 +320,92 @@
         }
 
         if (isMobile) {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isMoving = false;
+            let touchId = null;
+
             canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
                 if (gameOver || paused) return;
 
-                if (e.touches.length > 1) {
+                // If we are already moving, any new touch is a jump
+                if (isMoving) {
                     if (!player.isJumping) {
                         player.isJumping = true;
                         player.jumpStartTime = Date.now();
                         player.color = 'lightblue';
                     }
-                    isMoving = false;
                     return;
                 }
 
+                // If not moving, the first touch initiates movement
                 if (e.touches.length === 1) {
-                    if (isMoving) {
-                        if (!player.isJumping) {
-                            player.isJumping = true;
-                            player.jumpStartTime = Date.now();
-                            player.color = 'lightblue';
-                        }
-                    } else {
-                        const touch = scaleTouchCoordinates(e.touches[0]);
-                        touchStartX = touch.x;
-                        touchStartY = touch.y;
-                        isMoving = true;
+                    const touch = e.changedTouches[0];
+                    touchId = touch.identifier;
+                    const coords = scaleTouchCoordinates(touch);
+                    touchStartX = coords.x;
+                    touchStartY = coords.y;
+                    isMoving = true;
+                }
+                
+                // If two fingers touch down at the same time, it's also a jump
+                if (e.touches.length === 2 && !isMoving) {
+                     if (!player.isJumping) {
+                        player.isJumping = true;
+                        player.jumpStartTime = Date.now();
+                        player.color = 'lightblue';
                     }
                 }
             }, { passive: false });
 
             canvas.addEventListener('touchmove', e => {
                 e.preventDefault();
-                if (gameOver || paused || !isMoving || e.touches.length !== 1) return;
+                if (gameOver || paused || !isMoving) return;
 
-                const touch = scaleTouchCoordinates(e.touches[0]);
-                const dx = touch.x - touchStartX;
-                const dy = touch.y - touchStartY;
+                let moveTouch = null;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        moveTouch = e.changedTouches[i];
+                        break;
+                    }
+                }
+
+                if (!moveTouch) return;
+
+                const coords = scaleTouchCoordinates(moveTouch);
+                const dx = coords.x - touchStartX;
+                const dy = coords.y - touchStartY;
                 const magnitude = Math.sqrt(dx * dx + dy * dy);
+                const deadzone = 10;
 
-                if (magnitude > 0) {
-                    player.vx = (dx / magnitude) * player.speed;
-                    player.vy = (dy / magnitude) * player.speed;
+                if (magnitude > deadzone) {
+                    const maxDrag = 100;
+                    const speedFactor = Math.min(1, (magnitude - deadzone) / maxDrag);
+                    const currentSpeed = player.speed * speedFactor;
+
+                    player.vx = (dx / magnitude) * currentSpeed;
+                    player.vy = (dy / magnitude) * currentSpeed;
+                } else {
+                    player.vx = 0;
+                    player.vy = 0;
                 }
             }, { passive: false });
 
             canvas.addEventListener('touchend', e => {
                 e.preventDefault();
-                if (isMoving && e.touches.length === 0) {
+
+                let touchEnded = false;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        touchEnded = true;
+                        break;
+                    }
+                }
+
+                if (touchEnded) {
                     isMoving = false;
+                    touchId = null;
                     player.vx = 0;
                     player.vy = 0;
                 }
@@ -479,9 +516,7 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+            
             ctx.fillStyle = player.color;
             ctx.beginPath();
             ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
