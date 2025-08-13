@@ -22,11 +22,11 @@
         }
 
         #game-enclosure {
-            padding: 20px;
+            padding: 30px;
             background-color: #ffffff;
             border: 2px solid #333;
             box-shadow: 0 0 20px rgba(0,0,0,0.2);
-            border-radius: 15px;
+            border-radius: 20px;
             text-align: center;
         }
 
@@ -455,7 +455,7 @@
                 if (player.x - player.radius < 0) player.x = player.radius;
                 if (player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
                 if (player.y - player.radius < 0) player.y = player.radius;
-                if (player.y + player.radius > canvas.height) player.y = player.height - player.radius;
+                if (player.y + player.radius > canvas.height) player.y = canvas.height - player.radius;
             }
 
             lasers.forEach(laser => {
