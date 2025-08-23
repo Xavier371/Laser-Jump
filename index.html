@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,7 +152,7 @@
             x: gameResolution / 2,
             y: gameResolution / 2,
             radius: gridSize / 2,
-            speed: 4,
+            speed: isMobile ? 6 : 3,
             vx: 0,
             vy: 0,
             color: 'blue',
@@ -469,20 +470,21 @@
             }
             requestAnimationFrame(update);
 
-            if (keys.ArrowUp && player.y - player.radius > 0) player.y -= player.speed;
-            if (keys.ArrowDown && player.y + player.radius < canvas.height) player.y += player.speed;
-            if (keys.ArrowLeft && player.x - player.radius > 0) player.x -= player.speed;
-            if (keys.ArrowRight && player.x + player.radius < canvas.width) player.x += player.speed;
+            if (keys.ArrowUp) player.y -= player.speed;
+            if (keys.ArrowDown) player.y += player.speed;
+            if (keys.ArrowLeft) player.x -= player.speed;
+            if (keys.ArrowRight) player.x += player.speed;
 
             if (isMobile) {
                 player.x += player.vx;
                 player.y += player.vy;
-
-                if (player.x - player.radius < 0) player.x = player.radius;
-                if (player.x + player.radius > canvas.width) player.x = canvas.width - player.radius;
-                if (player.y - player.radius < 0) player.y = player.radius;
-                if (player.y + player.radius > canvas.height) player.y = canvas.height - player.radius;
             }
+
+            // Screen wrap-around (classic arcade-style)
+            if (player.x < -player.radius) player.x = canvas.width + player.radius;
+            if (player.x > canvas.width + player.radius) player.x = -player.radius;
+            if (player.y < -player.radius) player.y = canvas.height + player.radius;
+            if (player.y > canvas.height + player.radius) player.y = -player.radius;
 
             lasers.forEach(laser => {
                 if (laser.hasOwnProperty('vy')) {
@@ -543,3 +545,4 @@
     </script>
 </body>
 </html>
+
