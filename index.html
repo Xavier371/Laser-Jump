@@ -341,12 +341,18 @@
             let touchStartY = 0;
             let isMoving = false;
             let touchId = null;
+            let desiredVx = 0;
+            let desiredVy = 0;
+            let joystickCenterX = 0;
+            let joystickCenterY = 0;
+            const joystickMaxRadius = 60; // pixels
+            const joystickDeadzone = 6;   // pixels
 
             canvas.addEventListener('touchstart', e => {
                 e.preventDefault();
                 if (gameOver || paused) return;
 
-                // Left-half tap: jump
+                // Trigger jump for any left-half touch
                 for (let i = 0; i < e.changedTouches.length; i++) {
                     const t = e.changedTouches[i];
                     const coords = scaleTouchCoordinates(t);
@@ -356,19 +362,25 @@
                             player.jumpStartTime = Date.now();
                             player.color = 'lightblue';
                         }
-                        return;
+                        // do not return; allow right-half movement in same event
                     }
                 }
 
-                // Right-half touch: start movement (single finger)
-                if (!isMoving && e.changedTouches.length > 0) {
-                    const touch = e.changedTouches[0];
-                    const coords = scaleTouchCoordinates(touch);
-                    if (coords.x >= canvas.width / 2) {
-                        touchId = touch.identifier;
-                        touchStartX = coords.x;
-                        touchStartY = coords.y;
-                        isMoving = true;
+                // Start movement if there is a right-half touch and we are not already moving
+                if (!isMoving) {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const touch = e.changedTouches[i];
+                        const coords = scaleTouchCoordinates(touch);
+                        if (coords.x >= canvas.width / 2) {
+                            touchId = touch.identifier;
+                            isMoving = true;
+                            // Calibrate joystick center at initial touch point
+                            joystickCenterX = coords.x;
+                            joystickCenterY = coords.y;
+                            desiredVx = 0;
+                            desiredVy = 0;
+                            break;
+                        }
                     }
                 }
             }, { passive: false });
@@ -388,23 +400,28 @@
                 if (!moveTouch) return;
 
                 const coords = scaleTouchCoordinates(moveTouch);
-                // Ignore drags that cross into the left half; movement only on right-half
-                if (coords.x < canvas.width / 2) return;
-                const dx = coords.x - touchStartX;
-                const dy = coords.y - touchStartY;
-                const magnitude = Math.sqrt(dx * dx + dy * dy);
-                const deadzone = 5; 
-
-                if (magnitude > deadzone) {
-                    const maxDrag = 60; 
-                    const speedFactor = Math.min(1, (magnitude - deadzone) / maxDrag);
-                    const currentSpeed = player.speed * speedFactor;
-
-                    player.vx = (dx / magnitude) * currentSpeed;
-                    player.vy = (dy / magnitude) * currentSpeed;
+                // Movement only when finger is on the right half
+                if (coords.x < canvas.width / 2) {
+                    isMoving = false;
+                    touchId = null;
+                    desiredVx = 0;
+                    desiredVy = 0;
+                    return;
+                }
+                // Invisible joystick vector from calibrated center
+                let dx = coords.x - joystickCenterX;
+                let dy = coords.y - joystickCenterY;
+                const mag = Math.hypot(dx, dy);
+                if (mag > joystickDeadzone) {
+                    const clampedMag = Math.min(mag, joystickMaxRadius);
+                    const t = (clampedMag - joystickDeadzone) / (joystickMaxRadius - joystickDeadzone); // 0..1
+                    const speed = player.speed * t;
+                    dx /= mag; dy /= mag; // normalize
+                    desiredVx = dx * speed;
+                    desiredVy = dy * speed;
                 } else {
-                    player.vx = 0;
-                    player.vy = 0;
+                    desiredVx = 0;
+                    desiredVy = 0;
                 }
             }, { passive: false });
 
@@ -422,8 +439,8 @@
                 if (touchEnded) {
                     isMoving = false;
                     touchId = null;
-                    player.vx = 0;
-                    player.vy = 0;
+                    desiredVx = 0;
+                    desiredVy = 0;
                 }
             }, { passive: false });
         }
@@ -498,6 +515,10 @@
             if (keys.ArrowRight) player.x += player.speed;
 
             if (isMobile) {
+                // Smoothly ease velocity toward desired velocity for fluid control
+                const ease = 0.25;
+                player.vx = (player.vx || 0) + ease * (((typeof desiredVx !== 'undefined') ? desiredVx : 0) - (player.vx || 0));
+                player.vy = (player.vy || 0) + ease * (((typeof desiredVy !== 'undefined') ? desiredVy : 0) - (player.vy || 0));
                 player.x += player.vx;
                 player.y += player.vy;
             }
