@@ -270,8 +270,28 @@
 
         function spawnCoin() {
             const padding = coin.radius * 2;
-            coin.x = padding + Math.random() * (canvas.width - padding * 2);
-            coin.y = padding + Math.random() * (canvas.height - padding * 2);
+            const pctX = biasedPercent();
+            const pctY = biasedPercent();
+            coin.x = padding + pctX * (canvas.width - padding * 2);
+            coin.y = padding + pctY * (canvas.height - padding * 2);
+        }
+
+        // Generate a skewed percentage:
+        // - ~70% in [0.40, 0.60]
+        // - ~25% in [0.20, 0.95]
+        // - ~5% rare outliers below 0.20 or above 0.95
+        function biasedPercent() {
+            const coreTriangular = () => (Math.random() + Math.random()) / 2; // peaked at 0.5
+            const r = Math.random();
+            if (r < 0.70) {
+                return 0.40 + 0.20 * coreTriangular();
+            } else if (r < 0.95) {
+                return 0.20 + 0.75 * coreTriangular();
+            } else {
+                return Math.random() < 0.5
+                    ? Math.random() * 0.20
+                    : 0.95 + Math.random() * 0.05;
+            }
         }
 
         document.addEventListener('keydown', e => {
@@ -326,29 +346,29 @@
                 e.preventDefault();
                 if (gameOver || paused) return;
 
-                if (isMoving) {
-                    if (!player.isJumping) {
-                        player.isJumping = true;
-                        player.jumpStartTime = Date.now();
-                        player.color = 'lightblue';
+                // Left-half tap: jump
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    const coords = scaleTouchCoordinates(t);
+                    if (coords.x < canvas.width / 2) {
+                        if (!player.isJumping) {
+                            player.isJumping = true;
+                            player.jumpStartTime = Date.now();
+                            player.color = 'lightblue';
+                        }
+                        return;
                     }
-                    return;
                 }
 
-                if (e.touches.length === 1) {
+                // Right-half touch: start movement (single finger)
+                if (!isMoving && e.changedTouches.length > 0) {
                     const touch = e.changedTouches[0];
-                    touchId = touch.identifier;
                     const coords = scaleTouchCoordinates(touch);
-                    touchStartX = coords.x;
-                    touchStartY = coords.y;
-                    isMoving = true;
-                }
-                
-                if (e.touches.length === 2 && !isMoving) {
-                     if (!player.isJumping) {
-                        player.isJumping = true;
-                        player.jumpStartTime = Date.now();
-                        player.color = 'lightblue';
+                    if (coords.x >= canvas.width / 2) {
+                        touchId = touch.identifier;
+                        touchStartX = coords.x;
+                        touchStartY = coords.y;
+                        isMoving = true;
                     }
                 }
             }, { passive: false });
@@ -368,6 +388,8 @@
                 if (!moveTouch) return;
 
                 const coords = scaleTouchCoordinates(moveTouch);
+                // Ignore drags that cross into the left half; movement only on right-half
+                if (coords.x < canvas.width / 2) return;
                 const dx = coords.x - touchStartX;
                 const dy = coords.y - touchStartY;
                 const magnitude = Math.sqrt(dx * dx + dy * dy);
