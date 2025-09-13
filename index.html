@@ -400,15 +400,7 @@
                 if (!moveTouch) return;
 
                 const coords = scaleTouchCoordinates(moveTouch);
-                // Movement only when finger is on the right half
-                if (coords.x < canvas.width / 2) {
-                    isMoving = false;
-                    touchId = null;
-                    desiredVx = 0;
-                    desiredVy = 0;
-                    return;
-                }
-                // Invisible joystick vector from calibrated center
+                // Invisible joystick vector from calibrated center (no midline gating during move)
                 let dx = coords.x - joystickCenterX;
                 let dy = coords.y - joystickCenterY;
                 const mag = Math.hypot(dx, dy);
