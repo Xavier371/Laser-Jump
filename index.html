@@ -1,249 +1,540 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Laser Jump</title>
-  <style>
-    html, body {
-      width: 100%; height: 100%;
-      margin: 0; padding: 0;
-      overflow: hidden; background-color: #f0f0f0;
-    }
-    body {
-      display: flex; justify-content: center; align-items: center;
-      font-family: sans-serif;
-    }
-    #game-enclosure { text-align: center; }
-    .controls { display: flex; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
-    button {
-      background: linear-gradient(145deg, #e6e6e6, #ffffff);
-      border: 1px solid #dcdcdc; border-radius: 8px;
-      box-shadow: 2px 2px 5px #cccccc, -2px -2px 5px #ffffff;
-      padding: 10px 20px; font-size: 16px; cursor: pointer;
-      transition: all 0.2s ease-in-out; margin: 5px;
-    }
-    button:hover {
-      background: linear-gradient(145deg, #d4d4d4, #f0f0f0);
-      box-shadow: 4px 4px 10px #b0b0b0, -4px -4px 10px #ffffff;
-    }
-    button:active {
-      background: #e0e0e0;
-      box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff;
-    }
-    canvas {
-      display: block; margin: 0 auto 10px auto;
-      width: 90vmin; height: 90vmin; max-width: 500px; max-height: 500px;
-      border: 2px solid black;
-      touch-action: none; /* fixes movement on phones */
-    }
-    #instructionsModal {
-      display: none; position: fixed; z-index: 1;
-      left: 0; top: 0; width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.4);
-    }
-    .modal-content {
-      background-color: #fefefe; margin: 15% auto; padding: 20px;
-      border: 1px solid #888; width: 80%; max-width: 500px; position: relative;
-    }
-    #closeButton {
-      color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;
-    }
-    #closeButton:hover { color: black; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Laser Jump</title>
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: sans-serif;
+        }
+
+        #game-enclosure {
+            /* This is now an invisible container for centering */
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background: linear-gradient(145deg, #e6e6e6, #ffffff);
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px #cccccc, -2px -2px 5px #ffffff;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: linear-gradient(145deg, #d4d4d4, #f0f0f0);
+            box-shadow: 4px 4px 10px #b0b0b0, -4px -4px 10px #ffffff;
+        }
+
+        button:active {
+            background: #e0e0e0;
+            box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto 10px auto; /* Ensures perfect centering */
+            width: 90vmin;
+            height: 90vmin;
+            max-width: 500px;
+            max-height: 500px;
+            border: 2px solid black;
+            /* Important for fluid touch controls on phones */
+            touch-action: none;
+        }
+
+        #instructionsModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        #closeButton {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        #closeButton:hover,
+        #closeButton:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <div id="game-enclosure">
-    <h1>Laser Jump</h1>
-    <div class="controls">
-      <button id="pauseButton">Pause</button>
-      <button id="instructionsButton">Instructions</button>
-      <button id="difficultyButton">Mode: Hard</button>
+    <div id="game-enclosure">
+        <h1>Laser Jump</h1>
+        <div class="controls">
+            <button id="pauseButton">Pause</button>
+            <button id="instructionsButton">Instructions</button>
+            <button id="difficultyButton">Mode: Hard</button>
+        </div>
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <button id="restartButton" style="display: none;">Restart</button>
     </div>
-    <canvas id="gameCanvas" width="500" height="500"></canvas>
-    <button id="restartButton" style="display: none;">Restart</button>
-  </div>
 
-  <div id="instructionsModal">
-    <div class="modal-content">
-      <span id="closeButton">&times;</span>
-      <h2>How to Play</h2>
-      <ul>
-        <li>Use the <strong>arrow keys, or your finger</strong> to guide the blue dot.</li>
-        <li><strong>Jump</strong> over lasers by pressing the <strong>Spacebar</strong> or by <strong>tapping with a second finger</strong> on mobile.</li>
-        <li>Collect gold coins to score points.</li>
-        <li>The game ends if you hit a laser. Press <strong>Enter</strong> or the <strong>Restart</strong> button to try again.</li>
-      </ul>
-      <h3>Difficulty Modes</h3>
-      <p><strong>Easy Mode:</strong> Two lasers only.</p>
-      <p><strong>Hard Mode:</strong> A new laser spawns each coin.</p>
+    <div id="instructionsModal" style="display: none;">
+        <div class="modal-content">
+            <span id="closeButton">&times;</span>
+            <h2>How to Play</h2>
+            <ul>
+                <li>Use the <strong>arrow keys, or your finger</strong> to guide the blue dot.</li>
+                <li><strong>Jump</strong> over lasers by pressing the <strong>Spacebar</strong> or by <strong>tapping with a second finger</strong> on mobile.</li>
+                <li>Collect gold coins to score points.</li>
+                <li>The game ends if you hit a laser. Press <strong>Enter</strong> or the <strong>Restart</strong> button to try again.</li>
+            </ul>
+            <h3>Difficulty Modes</h3>
+            <p><strong>Easy Mode:</strong> A calmer experience with just two lasers</p>
+            <p><strong>Hard Mode:</strong> A new laser is added every time you collect a coin</p>
+        </div>
     </div>
-  </div>
 
-<script>
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const restartButton = document.getElementById('restartButton');
-const pauseButton = document.getElementById('pauseButton');
-const instructionsButton = document.getElementById('instructionsButton');
-const difficultyButton = document.getElementById('difficultyButton');
-const instructionsModal = document.getElementById('instructionsModal');
-const closeButton = document.getElementById('closeButton');
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const restartButton = document.getElementById('restartButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const instructionsButton = document.getElementById('instructionsButton');
+        const difficultyButton = document.getElementById('difficultyButton');
+        const instructionsModal = document.getElementById('instructionsModal');
+        const closeButton = document.getElementById('closeButton');
 
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-const gameResolution = 500;
-const gridSize = 25;
-canvas.width = canvas.height = gameResolution;
+        const gameResolution = 500;
+        const gridSize = 25;
+        const tileCount = 20;
+        canvas.width = canvas.height = gameResolution;
 
-let player = {
-  x: gameResolution / 2, y: gameResolution / 2,
-  radius: gridSize / 2, speed: isMobile ? 6 : 3,
-  vx: 0, vy: 0, color: 'blue',
-  isJumping: false, jumpStartTime: 0, jumpDuration: 500,
-};
-let lasers = [];
-let coin = { x: 0, y: 0, radius: gridSize / 2, color: 'gold' };
-let score = 0, gameOver = false, paused = false, hardMode = true;
-const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        let player = {
+            x: gameResolution / 2,
+            y: gameResolution / 2,
+            radius: gridSize / 2,
+            speed: isMobile ? 6 : 3,
+            vx: 0,
+            vy: 0,
+            color: 'blue',
+            isJumping: false,
+            jumpStartTime: 0,
+            jumpDuration: 500,
+        };
 
-function resetGame() {
-  player.x = player.y = gameResolution / 2;
-  player.vx = player.vy = 0;
-  player.isJumping = false; player.color = 'blue';
-  lasers = [
-    { y: 50, vy: 1.5, height: 5, color: 'red' },
-    { x: 50, vx: 1.5, width: 5, color: 'red' }
-  ];
-  score = 0; gameOver = false; paused = false;
-  spawnCoin();
-  restartButton.style.display = 'none';
-  pauseButton.textContent = 'Pause';
-}
-restartButton.addEventListener('click', () => { resetGame(); startGame(); });
-difficultyButton.addEventListener('click', () => {
-  hardMode = !hardMode;
-  difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
-});
+        let lasers = [];
 
-function startGame(){ update(); }
-function runCountdown(){
-  let count=3;
-  function tick(){
-    draw();
-    if(count>0){
-      ctx.fillStyle='black'; ctx.font='120px Arial';
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(count, canvas.width/2, canvas.height/2);
-      count--; setTimeout(tick,700);
-    } else { ctx.textBaseline='alphabetic'; startGame(); }
-  }
-  tick();
-}
-function togglePause(){
-  paused=!paused;
-  pauseButton.textContent=paused?'Resume':'Pause';
-  if(!paused) update();
-}
-pauseButton.addEventListener('click', togglePause);
-instructionsButton.addEventListener('click',()=>{ paused=true; pauseButton.textContent='Resume'; instructionsModal.style.display='block'; });
-closeButton.addEventListener('click',()=>{ instructionsModal.style.display='none'; if(paused) togglePause(); });
+        let coin = {
+            x: 0,
+            y: 0,
+            radius: gridSize / 2,
+            color: 'gold'
+        };
 
-function spawnCoin(){
-  const pad=coin.radius*2;
-  coin.x=pad+Math.random()*(canvas.width-pad*2);
-  coin.y=pad+Math.random()*(canvas.height-pad*2);
-}
+        let score = 0;
+        let gameOver = false;
+        let paused = false;
+        let hardMode = true;
 
-document.addEventListener('keydown', e=>{
-  if(gameOver && e.key==='Enter'){ resetGame(); startGame(); return; }
-  if(keys.hasOwnProperty(e.key)) keys[e.key]=true;
-  if(e.key===' '||e.key==='Spacebar'){
-    if(!player.isJumping){ player.isJumping=true; player.jumpStartTime=Date.now(); player.color='lightblue'; }
-  }
-  if(e.key==='p'||e.key==='P') togglePause();
-});
-document.addEventListener('keyup', e=>{ if(keys.hasOwnProperty(e.key)) keys[e.key]=false; });
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
 
-function scaleTouch(touch){
-  const rect=canvas.getBoundingClientRect();
-  return { x:(touch.clientX-rect.left)*(canvas.width/rect.width),
-           y:(touch.clientY-rect.top)*(canvas.height/rect.height)};
-}
-if(isMobile){
-  canvas.addEventListener('touchstart',e=>{
-    e.preventDefault();
-    if(gameOver||paused) return;
-    if(e.touches.length===2 && !player.isJumping){
-      player.isJumping=true; player.jumpStartTime=Date.now(); player.color='lightblue';
-    }
-  },{passive:false});
-  canvas.addEventListener('touchmove',e=>{
-    e.preventDefault();
-    if(gameOver||paused) return;
-    const t=e.touches[0]; if(!t) return;
-    const {x,y}=scaleTouch(t);
-    const dx=x-player.x, dy=y-player.y;
-    const mag=Math.sqrt(dx*dx+dy*dy);
-    if(mag>5){ player.vx=(dx/mag)*player.speed; player.vy=(dy/mag)*player.speed; }
-    else { player.vx=player.vy=0; }
-  },{passive:false});
-  canvas.addEventListener('touchend',()=>{ player.vx=player.vy=0; },{passive:false});
-}
+        function resetGame() {
+            player.x = gameResolution / 2;
+            player.y = gameResolution / 2;
+            player.vx = 0;
+            player.vy = 0;
+            player.isJumping = false;
+            player.color = 'blue';
 
-function checkCollisions(){
-  const dx=player.x-coin.x, dy=player.y-coin.y;
-  if(Math.sqrt(dx*dx+dy*dy)<player.radius+coin.radius){
-    score++; spawnCoin();
-    if(hardMode){
-      if(score%2){ lasers.push({ y:Math.random()<.5?0:canvas.height-5, vy:1.5*(Math.random()>.5?1:-1), height:5, color:'red'});}
-      else { lasers.push({ x:Math.random()<.5?0:canvas.width-5, vx:1.5*(Math.random()>.5?1:-1), width:5, color:'red'});}
-    }
-  }
-  if(player.isJumping) return;
-  lasers.forEach(l=>{
-    if(l.vy!==undefined && player.y+player.radius>l.y && player.y-player.radius<l.y+l.height) gameOver=true;
-    if(l.vx!==undefined && player.x+player.radius>l.x && player.x-player.radius<l.x+l.width) gameOver=true;
-  });
-}
-function update(){
-  if(paused) return;
-  if(gameOver){
-    ctx.fillStyle='black'; ctx.font='50px Arial'; ctx.textAlign='center';
-    ctx.fillText('Game Over',canvas.width/2,canvas.height/2);
-    ctx.font='20px Arial'; ctx.fillText('Press Enter to restart',canvas.width/2,canvas.height/2+40);
-    restartButton.style.display='block'; return;
-  }
-  requestAnimationFrame(update);
-  if(keys.ArrowUp) player.y-=player.speed;
-  if(keys.ArrowDown) player.y+=player.speed;
-  if(keys.ArrowLeft) player.x-=player.speed;
-  if(keys.ArrowRight) player.x+=player.speed;
-  if(isMobile){ player.x+=player.vx; player.y+=player.vy; }
-  if(player.x<-player.radius) player.x=canvas.width+player.radius;
-  if(player.x>canvas.width+player.radius) player.x=-player.radius;
-  if(player.y<-player.radius) player.y=canvas.height+player.radius;
-  if(player.y>canvas.height+player.radius) player.y=-player.radius;
-  lasers.forEach(l=>{
-    if(l.vy!==undefined){ l.y+=l.vy; if(l.y+l.height>canvas.height||l.y<0) l.vy*=-1; }
-    else { l.x+=l.vx; if(l.x+l.width>canvas.width||l.x<0) l.vx*=-1; }
-  });
-  if(player.isJumping && Date.now()-player.jumpStartTime>player.jumpDuration){ player.isJumping=false; player.color='blue'; }
-  checkCollisions(); draw();
-}
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle=player.color; ctx.beginPath(); ctx.arc(player.x,player.y,player.radius,0,Math.PI*2); ctx.fill();
-  lasers.forEach(l=>{
-    ctx.fillStyle=l.color;
-    if(l.vy!==undefined) ctx.fillRect(0,l.y,canvas.width,l.height);
-    else ctx.fillRect(l.x,0,l.width,canvas.height);
-  });
-  ctx.fillStyle=coin.color; ctx.beginPath(); ctx.arc(coin.x,coin.y,coin.radius,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='black'; ctx.font='20px Arial'; ctx.textAlign='left'; ctx.fillText('Score: '+score,10,25);
-}
-resetGame(); runCountdown();
-</script>
+            lasers = [
+                { y: 50, vy: 1.5, height: 5, color: 'red' },
+                { x: 50, vx: 1.5, width: 5, color: 'red' }
+            ];
+
+            score = 0;
+            gameOver = false;
+            paused = false;
+            
+            spawnCoin();
+            restartButton.style.display = 'none';
+            pauseButton.textContent = 'Pause';
+        }
+
+        restartButton.addEventListener('click', () => {
+            resetGame();
+            startGame();
+        });
+
+        difficultyButton.addEventListener('click', () => {
+            hardMode = !hardMode;
+            // FIXED: use template string so it doesn't break
+            difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
+        });
+
+        window.addEventListener('click', e => {
+            if (e.target === instructionsModal) {
+                instructionsModal.style.display = 'none';
+                if (paused) {
+                    togglePause();
+                }
+            }
+        });
+
+        function startGame() {
+            update();
+        }
+
+        function runCountdown() {
+            let count = 3;
+            function tick() {
+                draw();
+                
+                if (count > 0) {
+                    ctx.fillStyle = 'black';
+                    ctx.font = '120px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(count, canvas.width / 2, canvas.height / 2);
+                    
+                    count--;
+                    setTimeout(tick, 700);
+                } else {
+                    ctx.textBaseline = 'alphabetic';
+                    startGame();
+                }
+            }
+            tick();
+        }
+
+        function togglePause() {
+            paused = !paused;
+            pauseButton.textContent = paused ? 'Resume' : 'Pause';
+            if (!paused) {
+                update();
+            }
+        }
+
+        pauseButton.addEventListener('click', togglePause);
+        instructionsButton.addEventListener('click', () => {
+            paused = true;
+            pauseButton.textContent = 'Resume';
+            instructionsModal.style.display = 'block';
+        });
+        closeButton.addEventListener('click', () => {
+            instructionsModal.style.display = 'none';
+            if(paused) togglePause();
+        });
+
+        function spawnCoin() {
+            const padding = coin.radius * 2;
+            coin.x = padding + Math.random() * (canvas.width - padding * 2);
+            coin.y = padding + Math.random() * (canvas.height - padding * 2);
+        }
+
+        document.addEventListener('keydown', e => {
+            if (gameOver) {
+                if (e.key === 'Enter') {
+                    resetGame();
+                    startGame();
+                }
+                return;
+            }
+
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+
+            if (e.key === ' ' || e.key === 'Spacebar') {
+                if (!player.isJumping) {
+                    player.isJumping = true;
+                    player.jumpStartTime = Date.now();
+                    player.color = 'lightblue';
+                }
+            }
+
+            if (e.key === 'p' || e.key === 'P') {
+                togglePause();
+            }
+        });
+
+        document.addEventListener('keyup', e => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+
+        function scaleTouchCoordinates(touch) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (touch.clientX - rect.left) * scaleX,
+                y: (touch.clientY - rect.top) * scaleY
+            };
+        }
+
+        // --- Mobile controls (restored feel): drag from initial anchor to set velocity; second finger = jump
+        if (isMobile) {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let isMoving = false;
+            let touchId = null;
+
+            canvas.addEventListener('touchstart', e => {
+                e.preventDefault();
+                if (gameOver || paused) return;
+
+                // Use touches[0] to reliably grab the current finger on all devices
+                if (e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    touchId = touch.identifier;
+                    const coords = scaleTouchCoordinates(touch);
+                    touchStartX = coords.x;
+                    touchStartY = coords.y;
+                    isMoving = true;
+                } else if (e.touches.length >= 2) {
+                    // any additional finger triggers jump (same as before)
+                    if (!player.isJumping) {
+                        player.isJumping = true;
+                        player.jumpStartTime = Date.now();
+                        player.color = 'lightblue';
+                    }
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', e => {
+                e.preventDefault();
+                if (gameOver || paused || !isMoving) return;
+
+                let moveTouch = null;
+                for (let i = 0; i < e.touches.length; i++) {
+                    if (e.touches[i].identifier === touchId) {
+                        moveTouch = e.touches[i];
+                        break;
+                    }
+                }
+                if (!moveTouch) return;
+
+                const coords = scaleTouchCoordinates(moveTouch);
+                const dx = coords.x - touchStartX;
+                const dy = coords.y - touchStartY;
+                const magnitude = Math.sqrt(dx * dx + dy * dy);
+                const deadzone = 5;
+
+                if (magnitude > deadzone) {
+                    const maxDrag = 60;
+                    const speedFactor = Math.min(1, (magnitude - deadzone) / maxDrag);
+                    const currentSpeed = player.speed * speedFactor;
+
+                    player.vx = (dx / magnitude) * currentSpeed;
+                    player.vy = (dy / magnitude) * currentSpeed;
+                } else {
+                    player.vx = 0;
+                    player.vy = 0;
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', e => {
+                e.preventDefault();
+
+                let touchEnded = false;
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    if (e.changedTouches[i].identifier === touchId) {
+                        touchEnded = true;
+                        break;
+                    }
+                }
+
+                if (touchEnded) {
+                    isMoving = false;
+                    touchId = null;
+                    player.vx = 0;
+                    player.vy = 0;
+                }
+            }, { passive: false });
+        }
+
+        function checkCollisions() {
+            const dx = player.x - coin.x;
+            const dy = player.y - coin.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < player.radius + coin.radius) {
+                score++;
+                spawnCoin();
+                
+                if (hardMode) {
+                    if (score % 2 !== 0) {
+                        lasers.push({ 
+                            y: player.y < canvas.height / 2 ? canvas.height - 5 : 0,
+                            vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                            height: 5, 
+                            color: 'red' 
+                        });
+                    } else {
+                        lasers.push({ 
+                            x: player.x < canvas.width / 2 ? canvas.width - 5 : 0,
+                            vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), 
+                            width: 5, 
+                            color: 'red' 
+                        });
+                    }
+                }
+            }
+
+            if (player.isJumping) return;
+
+            const playerPixelX = player.x;
+            const playerPixelY = player.y;
+
+            lasers.forEach(laser => {
+                if (gameOver) return;
+
+                if (laser.hasOwnProperty('vy')) {
+                    if (playerPixelY + player.radius > laser.y && playerPixelY - player.radius < laser.y + laser.height) {
+                        gameOver = true;
+                    }
+                } else if (laser.hasOwnProperty('vx')) {
+                    if (playerPixelX + player.radius > laser.x && playerPixelX - player.radius < laser.x + laser.width) {
+                        gameOver = true;
+                    }
+                }
+            });
+        }
+
+        function update() {
+            if (paused) {
+                return;
+            }
+            if (gameOver) {
+                ctx.fillStyle = 'black';
+                ctx.font = '50px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+                ctx.font = '20px Arial';
+                ctx.fillText('Press Enter to restart', canvas.width / 2, canvas.height / 2 + 40);
+                restartButton.style.display = 'block';
+                return;
+            }
+            requestAnimationFrame(update);
+
+            if (keys.ArrowUp) player.y -= player.speed;
+            if (keys.ArrowDown) player.y += player.speed;
+            if (keys.ArrowLeft) player.x -= player.speed;
+            if (keys.ArrowRight) player.x += player.speed;
+
+            if (isMobile) {
+                player.x += player.vx;
+                player.y += player.vy;
+            }
+
+            // Screen wrap-around (classic arcade-style)
+            if (player.x < -player.radius) player.x = canvas.width + player.radius;
+            if (player.x > canvas.width + player.radius) player.x = -player.radius;
+            if (player.y < -player.radius) player.y = canvas.height + player.radius;
+            if (player.y > canvas.height + player.radius) player.y = -player.radius;
+
+            lasers.forEach(laser => {
+                if (laser.hasOwnProperty('vy')) {
+                    laser.y += laser.vy;
+                    if (laser.y + laser.height > canvas.height || laser.y < 0) {
+                        laser.vy *= -1;
+                    }
+                } else if (laser.hasOwnProperty('vx')) {
+                    laser.x += laser.vx;
+                    if (laser.x + laser.width > canvas.width || laser.x < 0) {
+                        laser.vx *= -1;
+                    }
+                }
+            });
+
+            if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration) {
+                player.isJumping = false;
+                player.color = 'blue';
+            }
+
+            checkCollisions();
+            draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white'; // Explicitly set background to white every frame
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            lasers.forEach(laser => {
+                ctx.fillStyle = laser.color;
+                if (laser.hasOwnProperty('vy')) {
+                    ctx.fillRect(0, laser.y, canvas.width, laser.height);
+                } else if (laser.hasOwnProperty('vx')) {
+                    ctx.fillRect(laser.x, 0, laser.width, canvas.height);
+                }
+            });
+
+            ctx.fillStyle = coin.color;
+            ctx.beginPath();
+            ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Score: ' + score, 10, 25);
+        }
+
+        resetGame();
+        runCountdown();
+
+    </script>
 </body>
 </html>
