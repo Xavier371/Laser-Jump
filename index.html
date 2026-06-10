@@ -365,8 +365,7 @@ let player = {
 };
 
 let lasers = [];
-const COIN_SPEED = isMobile ? 2.0 : 1.4;
-let coin = { x: 0, y: 0, vx: 0, vy: 0, radius: gridSize / 2, color: 'gold' };
+let coin = { x: 0, y: 0, radius: gridSize / 2, color: 'gold' };
 let score = 0, gameOver = false, paused = false, hardMode = true;
 const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 let animFrameId = null;
@@ -421,9 +420,6 @@ function spawnCoin() {
   const pad = coin.radius * 2;
   coin.x = pad + Math.random() * (canvas.width  - 2 * pad);
   coin.y = pad + Math.random() * (canvas.height - 2 * pad);
-  const angle = Math.random() * Math.PI * 2;
-  coin.vx = Math.cos(angle) * COIN_SPEED;
-  coin.vy = Math.sin(angle) * COIN_SPEED;
 }
 
 document.addEventListener('keydown', e => {
@@ -606,15 +602,15 @@ function update(timestamp) {
   const dt = Math.min((timestamp - lastTimestamp) / (1000/60), 3);
   lastTimestamp = timestamp;
 
-  if (keys.ArrowUp)    player.y -= player.speed * dt;
-  if (keys.ArrowDown)  player.y += player.speed * dt;
-  if (keys.ArrowLeft)  player.x -= player.speed * dt;
-  if (keys.ArrowRight) player.x += player.speed * dt;
+  if (keys.ArrowUp)    player.y -= player.speed * speedMult * dt;
+  if (keys.ArrowDown)  player.y += player.speed * speedMult * dt;
+  if (keys.ArrowLeft)  player.x -= player.speed * speedMult * dt;
+  if (keys.ArrowRight) player.x += player.speed * speedMult * dt;
 
   if (isMobile) {
     const ease = 1 - Math.pow(1 - 0.22, dt);
-    player.vx = player.vx * (1-ease) + joyTargetVx * ease;
-    player.vy = player.vy * (1-ease) + joyTargetVy * ease;
+    player.vx = player.vx * (1-ease) + joyTargetVx * speedMult * ease;
+    player.vy = player.vy * (1-ease) + joyTargetVy * speedMult * ease;
     player.x += player.vx * dt;
     player.y += player.vy * dt;
   }
@@ -633,13 +629,6 @@ function update(timestamp) {
       if (l.x + l.width > canvas.width || l.x < 0) l.vx *= -1;
     }
   }
-
-  coin.x += coin.vx * speedMult * dt;
-  coin.y += coin.vy * speedMult * dt;
-  if (coin.x - coin.radius < 0)              { coin.x = coin.radius;               coin.vx = Math.abs(coin.vx); }
-  if (coin.x + coin.radius > canvas.width)   { coin.x = canvas.width - coin.radius; coin.vx = -Math.abs(coin.vx); }
-  if (coin.y - coin.radius < 0)              { coin.y = coin.radius;                coin.vy = Math.abs(coin.vy); }
-  if (coin.y + coin.radius > canvas.height)  { coin.y = canvas.height - coin.radius; coin.vy = -Math.abs(coin.vy); }
 
   if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration) {
     player.isJumping = false; player.color = 'blue';
