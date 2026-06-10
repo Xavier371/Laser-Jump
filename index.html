@@ -96,113 +96,169 @@
     }
 
     /* ============================================================
-       PORTRAIT MOBILE — all-fixed (same strategy as landscape)
-       Left 50vw = jump zone. Right 50vw = joystick.
-       Canvas fixed-centered. Compact controls top-right.
+       PORTRAIT MOBILE
+       Row 1: controls bar (single row, full width, ~40px)
+       Row 2: canvas (fills remaining space above strip, centered)
+       Row 3: fixed bottom strip — left=jump, right=joystick (150px)
     ============================================================ */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
 
-      body { align-items: stretch; }
-      #game-enclosure { height: 100%; max-width: none; }
+      body { align-items: flex-start; justify-content: flex-start; }
+
+      #game-enclosure {
+        display: flex; flex-direction: column; align-items: center;
+        width: 100%; max-width: none;
+        height: 100vh; padding: 0 0 150px; gap: 0;
+        box-sizing: border-box; overflow: hidden;
+      }
+
+      h1      { display: none; }
       .tagline { display: none !important; }
 
-      h1 {
-        position: fixed; z-index: 6;
-        top: 0; left: 0; margin: 0;
-        font-size: 15px; padding: 6px 10px 5px; line-height: 1.2;
+      /* Full-width controls bar at top */
+      .controls {
+        width: 100%; flex-shrink: 0;
+        display: flex; flex-direction: row; flex-wrap: nowrap;
+        align-items: center; justify-content: center; gap: 5px;
+        padding: 6px 10px; box-sizing: border-box;
+        background: #d8d8d8;
+        border-bottom: 2px solid rgba(0,0,0,0.13);
+      }
+      .btn       { height: 28px; font-size: 10px; padding: 0 10px; border-radius: 4px; }
+      .speed-wrap               { height: 28px; font-size: 10px; gap: 4px; }
+      .speed-wrap input[type=range] { width: 58px; }
+      .speed-val                { font-size: 9.5px; min-width: 22px; }
+
+      /* Canvas: square, centered in remaining space */
+      canvas {
+        flex-shrink: 0;
+        width:  min(96vw, calc(100vh - 190px));
+        height: min(96vw, calc(100vh - 190px));
+        margin: auto;
+        max-width: none; max-height: none;
+      }
+
+      /* Bottom strip — jump zone (left half) */
+      #jumpArea {
+        position: fixed; z-index: 5;
+        bottom: 0; left: 0;
+        width: 50vw; height: 150px;
+        touch-action: none; box-sizing: border-box;
+        background: rgba(11,42,122,0.09);
+        border: none;
+        border-top: 2px solid rgba(11,42,122,0.20);
+        border-right: 1px solid rgba(11,42,122,0.14);
+        border-radius: 0;
+        display: flex !important;
+        flex-direction: column; align-items: center; justify-content: center; gap: 7px;
+      }
+      #jumpArea::before {
+        content: '';
+        width: 54px; height: 54px; border-radius: 50%;
+        background: rgba(11,42,122,0.12);
+        border: 2.5px solid rgba(11,42,122,0.28);
+        display: block; flex-shrink: 0;
         pointer-events: none;
       }
-
-      .controls {
-        position: fixed; z-index: 6;
-        top: 0; right: 0; left: auto;
-        flex-direction: row; flex-wrap: wrap;
-        gap: 3px; padding: 4px 6px 3px;
-        align-items: center; justify-content: flex-end;
-        background: rgba(224,224,224,0.95);
-        border-bottom-left-radius: 8px;
-        width: auto; max-width: 72vw;
-      }
-      .btn       { height: 24px; font-size: 9.5px; padding: 0 7px; border-radius: 3px; }
-      .speed-wrap               { height: 24px; font-size: 9.5px; gap: 3px; }
-      .speed-wrap input[type=range] { width: 50px; }
-      .speed-val                { font-size: 9px; min-width: 18px; }
-
-      canvas {
-        position: fixed; z-index: 1;
-        top: 50%; left: 50%;
-        width:  min(92vw, calc(100vh - 60px));
-        height: min(92vw, calc(100vh - 60px));
-        max-width: none; max-height: none;
-        transform: translate(-50%, calc(-50% + 20px));
+      #jumpArea::after {
+        content: 'TAP TO JUMP';
+        font-size: 9px; font-weight: 700; letter-spacing: 0.9px;
+        color: rgba(11,42,122,0.45); pointer-events: none;
       }
 
-      #leftJumpArea {
-        display: block !important;
-        position: fixed; z-index: 2;
-        left: 0; top: 0; bottom: 0; width: 50vw;
-        touch-action: none; background: transparent;
-      }
-
+      /* Bottom strip — joystick zone (right half) */
       #joystickArea {
-        position: fixed; z-index: 2;
-        left: auto; right: 0; top: 0; bottom: 0; width: 50vw;
+        position: fixed; z-index: 3;
+        bottom: 0; right: 0; left: auto; top: auto;
+        width: 50vw; height: 150px;
+        background: rgba(11,42,122,0.04);
+        border-top: 2px solid rgba(11,42,122,0.13);
+        touch-action: none;
       }
 
-      #jumpArea { display: none !important; }
+      #leftJumpArea { display: none !important; }
     }
 
     /* ============================================================
        LANDSCAPE MOBILE
-       Left 50vw = jump zone. Right 50vw = joystick.
-       Canvas fixed-centered. Compact controls top-right.
+       Canvas fixed-centered. Full-height left=jump, right=joystick.
+       Compact top bar: title left, controls right.
     ============================================================ */
     @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
 
       body { align-items: stretch; }
-      #game-enclosure { height: 100%; max-width: none; }
+      #game-enclosure { height: 100vh; max-width: none; overflow: hidden; }
       .tagline { display: none; }
 
+      /* Floating title — top left */
       h1 {
+        display: block;
         position: fixed; z-index: 6;
         top: 0; left: 0; margin: 0;
-        font-size: 14px; padding: 5px 10px 4px; line-height: 1.2;
-        pointer-events: none;
+        font-size: 13px; font-weight: 700;
+        padding: 6px 12px 5px; line-height: 1.2;
+        color: #111; pointer-events: none;
+        background: rgba(224,224,224,0.92);
+        border-bottom-right-radius: 8px;
       }
 
+      /* Controls — top right */
       .controls {
+        display: flex;
         position: fixed; z-index: 6;
         top: 0; right: 0; left: auto;
-        flex-direction: row; flex-wrap: wrap;
-        gap: 3px; padding: 3px 6px 3px;
+        flex-direction: row; flex-wrap: nowrap; gap: 4px;
+        padding: 5px 8px 4px;
         align-items: center; justify-content: flex-end;
-        background: rgba(224,224,224,0.95);
+        background: rgba(224,224,224,0.92);
         border-bottom-left-radius: 8px;
-        width: auto; max-width: 65vw;
+        width: auto;
       }
-      .btn       { height: 22px; font-size: 9px; padding: 0 6px; border-radius: 3px; }
-      .speed-wrap               { height: 22px; font-size: 9px; gap: 3px; }
-      .speed-wrap input[type=range] { width: 45px; }
-      .speed-val                { font-size: 8.5px; min-width: 18px; }
+      .btn       { height: 24px; font-size: 9.5px; padding: 0 8px; border-radius: 3px; }
+      .speed-wrap               { height: 24px; font-size: 9.5px; gap: 3px; }
+      .speed-wrap input[type=range] { width: 50px; }
+      .speed-val                { font-size: 9px; min-width: 20px; }
 
+      /* Canvas fixed, centered */
       canvas {
+        display: block;
         position: fixed; z-index: 1;
         top: 50%; left: 50%;
-        width:  72vmin; height: 72vmin;
+        width: 74vmin; height: 74vmin;
         max-width: none; max-height: none;
-        transform: translate(-50%, calc(-50% + 14px));
+        transform: translate(-50%, calc(-50% + 15px));
       }
 
+      /* Left half — jump zone */
       #leftJumpArea {
-        display: block !important;
+        display: flex !important;
         position: fixed; z-index: 2;
         left: 0; top: 0; bottom: 0; width: 50vw;
-        touch-action: none; background: transparent;
+        touch-action: none;
+        background: rgba(11,42,122,0.07);
+        border-right: 1px solid rgba(11,42,122,0.15);
+        flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+      }
+      #leftJumpArea::before {
+        content: '';
+        width: 58px; height: 58px; border-radius: 50%;
+        background: rgba(11,42,122,0.12);
+        border: 2.5px solid rgba(11,42,122,0.28);
+        display: block; flex-shrink: 0;
+        pointer-events: none;
+      }
+      #leftJumpArea::after {
+        content: 'TAP TO JUMP';
+        font-size: 9px; font-weight: 700; letter-spacing: 0.9px;
+        color: rgba(11,42,122,0.45); pointer-events: none;
       }
 
+      /* Right half — joystick zone */
       #joystickArea {
         position: fixed; z-index: 2;
         left: auto; right: 0; top: 0; bottom: 0; width: 50vw;
+        background: rgba(11,42,122,0.03);
+        touch-action: none;
       }
 
       #jumpArea { display: none !important; }
