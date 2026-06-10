@@ -602,15 +602,16 @@ function update(timestamp) {
   const dt = Math.min((timestamp - lastTimestamp) / (1000/60), 3);
   lastTimestamp = timestamp;
 
-  if (keys.ArrowUp)    player.y -= player.speed * speedMult * dt;
-  if (keys.ArrowDown)  player.y += player.speed * speedMult * dt;
-  if (keys.ArrowLeft)  player.x -= player.speed * speedMult * dt;
-  if (keys.ArrowRight) player.x += player.speed * speedMult * dt;
+  const playerMult = Math.max(1.0, speedMult);
+  if (keys.ArrowUp)    player.y -= player.speed * playerMult * dt;
+  if (keys.ArrowDown)  player.y += player.speed * playerMult * dt;
+  if (keys.ArrowLeft)  player.x -= player.speed * playerMult * dt;
+  if (keys.ArrowRight) player.x += player.speed * playerMult * dt;
 
   if (isMobile) {
     const ease = 1 - Math.pow(1 - 0.22, dt);
-    player.vx = player.vx * (1-ease) + joyTargetVx * speedMult * ease;
-    player.vy = player.vy * (1-ease) + joyTargetVy * speedMult * ease;
+    player.vx = player.vx * (1-ease) + joyTargetVx * playerMult * ease;
+    player.vy = player.vy * (1-ease) + joyTargetVy * playerMult * ease;
     player.x += player.vx * dt;
     player.y += player.vy * dt;
   }
