@@ -110,22 +110,22 @@
       #game-enclosure {
         display: flex; flex-direction: column; align-items: center;
         width: 100%; max-width: none;
-        padding: 10px 12px 0; gap: 6px;
+        padding: 14px 14px 0; gap: 8px;
         box-sizing: border-box;
         pointer-events: none;
       }
 
-      h1 { font-size: 19px; margin: 0; text-align: center; width: 100%; }
+      h1 { font-size: 20px; margin: 0; text-align: center; width: 100%; }
 
       .tagline {
-        font-size: 11px; color: #333; line-height: 1.4;
+        font-size: 11.5px; color: #333; line-height: 1.45;
         margin: 0; text-align: center; width: 100%;
       }
 
       .controls {
         pointer-events: auto; position: relative; z-index: 6;
         gap: 6px; flex-wrap: wrap; justify-content: center; width: 100%;
-        padding: 2px 0;
+        padding: 4px 0;
       }
       .btn       { height: 30px; font-size: 10px; padding: 0 10px; border-radius: 5px; }
       .speed-wrap               { height: 30px; font-size: 10px; gap: 4px; }
@@ -133,9 +133,9 @@
       .speed-val                { font-size: 9.5px; min-width: 22px; }
 
       canvas {
-        width: min(96vw, calc(100vh - 210px));
-        height: min(96vw, calc(100vh - 210px));
-        margin-top: 8px; max-width: none; max-height: none;
+        width: min(96vw, calc(100vh - 220px));
+        height: min(96vw, calc(100vh - 220px));
+        margin-top: 10px; max-width: none; max-height: none;
       }
 
       /* Full left half — jump zone */
@@ -181,38 +181,49 @@
 
       body { align-items: stretch; }
       #game-enclosure { height: 100vh; max-width: none; overflow: hidden; }
-      .tagline { display: none; }
 
+      /* Title — centered at top */
       h1 {
         position: fixed; z-index: 6;
-        top: 0; left: 0; margin: 0;
+        top: 0; left: 0; right: 0; margin: 0;
         font-size: 13px; font-weight: 700;
-        padding: 6px 10px 5px; line-height: 1.2;
-        color: #111; pointer-events: none;
+        padding: 5px 90px 3px; line-height: 1.2;
+        color: #111; pointer-events: none; text-align: center;
         background: rgba(220,220,220,0.95);
-        border-bottom-right-radius: 7px;
       }
 
-      .controls {
+      /* Tagline — centered below title */
+      .tagline {
+        display: block;
         position: fixed; z-index: 6;
+        top: 26px; left: 0; right: 0; margin: 0;
+        font-size: 9.5px; color: #444; line-height: 1.3;
+        padding: 0 90px 5px; text-align: center; pointer-events: none;
+        background: rgba(220,220,220,0.95);
+        border-bottom-left-radius: 6px; border-bottom-right-radius: 6px;
+      }
+
+      /* Controls — vertical column top-right */
+      .controls {
+        position: fixed; z-index: 7;
         top: 0; right: 0; left: auto;
-        display: flex; flex-direction: column; flex-wrap: nowrap; gap: 6px;
-        padding: 8px 8px 10px;
+        display: flex; flex-direction: column; flex-wrap: nowrap; gap: 5px;
+        padding: 6px 7px 8px;
         align-items: stretch; justify-content: flex-start;
         background: rgba(220,220,220,0.95);
-        border-bottom-left-radius: 10px; width: auto; min-width: 72px;
+        border-bottom-left-radius: 10px; width: auto; min-width: 68px;
       }
-      .btn       { height: 26px; font-size: 9.5px; padding: 0 8px; border-radius: 4px; white-space: nowrap; }
-      .speed-wrap               { height: 26px; font-size: 9.5px; gap: 3px; flex-direction: column; height: auto; align-items: stretch; }
+      .btn       { height: 22px; font-size: 9px; padding: 0 7px; border-radius: 4px; white-space: nowrap; }
+      .speed-wrap               { font-size: 9px; gap: 2px; flex-direction: column; height: auto; align-items: stretch; }
       .speed-wrap input[type=range] { width: 100%; }
-      .speed-val                { font-size: 9px; min-width: 20px; text-align: center; }
+      .speed-val                { font-size: 8.5px; min-width: 18px; text-align: center; }
 
       canvas {
         position: fixed; z-index: 1;
         top: 50%; left: 50%;
-        width: 72vmin; height: 72vmin;
+        width: 68vmin; height: 68vmin;
         max-width: none; max-height: none;
-        transform: translate(-50%, calc(-50% + 14px));
+        transform: translate(-50%, -50%);
       }
 
       /* Left half — jump zone */
@@ -230,7 +241,23 @@
         width: 50vw; touch-action: none; background: transparent;
       }
 
-      #jumpArea { display: none !important; }
+      /* Jump button — bottom-left */
+      #jumpArea {
+        position: fixed; z-index: 5;
+        left: 16px; bottom: 22px;
+        width: 68px; height: 68px;
+        border-radius: 50%; touch-action: none;
+        background: rgba(11,42,122,0.18);
+        border: 2.5px solid rgba(11,42,122,0.38);
+        box-shadow: 0 3px 14px rgba(0,0,0,0.18);
+        display: flex !important;
+        align-items: center; justify-content: center;
+      }
+      #jumpArea::before {
+        content: 'JUMP';
+        font-size: 9.5px; font-weight: 800; letter-spacing: 0.8px;
+        color: rgba(11,42,122,0.60); pointer-events: none;
+      }
     }
 
     /* ============================================================
