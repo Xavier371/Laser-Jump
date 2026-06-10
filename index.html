@@ -96,64 +96,66 @@
     }
 
     /* ============================================================
-       PORTRAIT MOBILE
-       Strategy: normal document flow — no fixed canvas, no display:contents.
-       Header (h1 + tagline + controls) flows at top.
-       Canvas fills remaining space below it.
-       Joystick zone (fixed right half) starts BELOW the header so
-       buttons are never blocked.
-       Jump button is fixed bottom-left.
+       PORTRAIT MOBILE — all-fixed (same strategy as landscape)
+       Left 50vw = jump zone. Right 50vw = joystick.
+       Canvas fixed-centered. Compact controls top-right.
     ============================================================ */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
 
-      body { align-items: flex-start; justify-content: flex-start; }
+      body { align-items: stretch; }
+      #game-enclosure { height: 100%; max-width: none; }
+      .tagline { display: none !important; }
 
-      #game-enclosure {
-        display: flex; flex-direction: column; align-items: center;
-        width: 100%; max-width: none;
-        padding: 6px 8px 0; gap: 5px; box-sizing: border-box;
+      h1 {
+        position: fixed; z-index: 6;
+        top: 0; left: 0; margin: 0;
+        font-size: 15px; padding: 6px 10px 5px; line-height: 1.2;
+        pointer-events: none;
       }
 
-      h1 { font-size: 19px; margin: 0; text-align: center; width: 100%; }
-
-      .tagline {
-        font-size: 11px; color: #222; line-height: 1.35;
-        padding: 0; text-align: center; width: 100%;
+      .controls {
+        position: fixed; z-index: 6;
+        top: 0; right: 0; left: auto;
+        flex-direction: row; flex-wrap: wrap;
+        gap: 3px; padding: 4px 6px 3px;
+        align-items: center; justify-content: flex-end;
+        background: rgba(224,224,224,0.95);
+        border-bottom-left-radius: 8px;
+        width: auto; max-width: 72vw;
       }
+      .btn       { height: 24px; font-size: 9.5px; padding: 0 7px; border-radius: 3px; }
+      .speed-wrap               { height: 24px; font-size: 9.5px; gap: 3px; }
+      .speed-wrap input[type=range] { width: 50px; }
+      .speed-val                { font-size: 9px; min-width: 18px; }
 
-      .controls { gap: 4px; padding: 0; justify-content: center; flex-wrap: wrap; width: 100%; }
-      .btn       { height: 26px; font-size: 10.5px; padding: 0 8px; border-radius: 3px; }
-      .speed-wrap               { height: 26px; font-size: 10.5px; gap: 3px; }
-      .speed-wrap input[type=range] { width: 52px; }
-      .speed-val                { font-size: 10px; min-width: 18px; }
-
-      /* Canvas: square, as large as fits.
-         ~100px header above + ~70px jump zone below = ~170px reserved.
-         Also cap at 90vw so it doesn't overflow horizontally. */
       canvas {
-        width:  min(90vw, calc(100vh - 175px));
-        height: min(90vw, calc(100vh - 175px));
-        margin-top: 4px;
+        position: fixed; z-index: 1;
+        top: 50%; left: 50%;
+        width:  min(92vw, calc(100vh - 60px));
+        height: min(92vw, calc(100vh - 60px));
+        max-width: none; max-height: none;
+        transform: translate(-50%, calc(-50% + 20px));
       }
 
-      /* Joystick zone: push below header so buttons stay touchable */
-      #joystickArea { top: 104px; }
-
-      /* Jump button: fixed bottom-left */
-      #jumpArea {
-        position: fixed; z-index: 5;
-        bottom: 14px; left: 14px;
-        width:  min(38vw, 130px);
-        height: min(54px, 11vh);
-        min-width: 88px; min-height: 44px;
+      #leftJumpArea {
+        display: block !important;
+        position: fixed; z-index: 2;
+        left: 0; top: 0; bottom: 0; width: 50vw;
+        touch-action: none; background: transparent;
       }
+
+      #joystickArea {
+        position: fixed; z-index: 2;
+        left: auto; right: 0; top: 0; bottom: 0; width: 50vw;
+      }
+
+      #jumpArea { display: none !important; }
     }
 
     /* ============================================================
        LANDSCAPE MOBILE
-       Strategy: everything fixed/absolute.
-       Left 50% = jump zone. Right 50% = joystick.
-       Canvas centered. Compact header at top.
+       Left 50vw = jump zone. Right 50vw = joystick.
+       Canvas fixed-centered. Compact controls top-right.
     ============================================================ */
     @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
 
@@ -171,18 +173,18 @@
       .controls {
         position: fixed; z-index: 6;
         top: 0; right: 0; left: auto;
-        flex-direction: row; flex-wrap: nowrap; gap: 4px;
-        padding: 4px 8px 3px; align-items: center;
+        flex-direction: row; flex-wrap: wrap;
+        gap: 3px; padding: 3px 6px 3px;
+        align-items: center; justify-content: flex-end;
         background: rgba(224,224,224,0.95);
         border-bottom-left-radius: 8px;
-        width: auto; max-width: none;
+        width: auto; max-width: 65vw;
       }
-      .btn       { height: 24px; font-size: 9.5px; padding: 0 7px; border-radius: 3px; }
-      .speed-wrap               { height: 24px; font-size: 10px; gap: 3px; }
-      .speed-wrap input[type=range] { width: 48px; }
-      .speed-val                { font-size: 9.5px; min-width: 20px; }
+      .btn       { height: 22px; font-size: 9px; padding: 0 6px; border-radius: 3px; }
+      .speed-wrap               { height: 22px; font-size: 9px; gap: 3px; }
+      .speed-wrap input[type=range] { width: 45px; }
+      .speed-val                { font-size: 8.5px; min-width: 18px; }
 
-      /* Canvas fixed, perfectly centered with small downward nudge for header */
       canvas {
         position: fixed; z-index: 1;
         top: 50%; left: 50%;
@@ -191,7 +193,6 @@
         transform: translate(-50%, calc(-50% + 14px));
       }
 
-      /* Full left half = jump zone (above canvas, below buttons) */
       #leftJumpArea {
         display: block !important;
         position: fixed; z-index: 2;
@@ -199,13 +200,11 @@
         touch-action: none; background: transparent;
       }
 
-      /* Full right half = joystick zone */
       #joystickArea {
         position: fixed; z-index: 2;
         left: auto; right: 0; top: 0; bottom: 0; width: 50vw;
       }
 
-      /* Hide portrait jump button in landscape */
       #jumpArea { display: none !important; }
     }
 
