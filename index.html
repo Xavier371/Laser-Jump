@@ -112,7 +112,7 @@
         width: 100%; max-width: none;
         padding: 5px 8px 0; gap: 4px;
         box-sizing: border-box;
-        position: relative; z-index: 6;
+        pointer-events: none;
       }
 
       h1 { font-size: 18px; margin: 0; text-align: center; width: 100%; }
@@ -122,7 +122,10 @@
         margin: 0; text-align: center; width: 100%;
       }
 
-      .controls { gap: 4px; flex-wrap: wrap; justify-content: center; width: 100%; }
+      .controls {
+        pointer-events: auto; position: relative; z-index: 6;
+        gap: 4px; flex-wrap: wrap; justify-content: center; width: 100%;
+      }
       .btn       { height: 26px; font-size: 9.5px; padding: 0 8px; border-radius: 4px; }
       .speed-wrap               { height: 26px; font-size: 9.5px; gap: 3px; }
       .speed-wrap input[type=range] { width: 56px; }
