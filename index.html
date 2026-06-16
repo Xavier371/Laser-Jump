@@ -13,18 +13,19 @@
     }
 
     html, body {
-      width: 100%; height: 100%;
+      width: 100%;
       margin: 0; padding: 0;
-      overflow: hidden;
       background: #c8cdd8;
       -webkit-tap-highlight-color: transparent;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     }
+    html { min-height: 100%; }
     body {
+      min-height: 100vh;
       display: flex; justify-content: center; align-items: center;
-      padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0)
-               env(safe-area-inset-bottom,0) env(safe-area-inset-left,0);
+      padding: 20px;
       box-sizing: border-box;
+      overflow-y: auto;
     }
 
     /* ============================================================
@@ -90,8 +91,8 @@
     /* Canvas — desktop */
     canvas {
       display: block;
-      width:  min(68vmin, 460px);
-      height: min(68vmin, 460px);
+      width:  min(68vmin, 460px, calc(100vh - 270px));
+      height: min(68vmin, 460px, calc(100vh - 270px));
       border: 2px solid #1a1a1a; background: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,0.18);
       border-radius: 4px;
@@ -114,19 +115,23 @@
     }
     #player-tag-edit:hover { background: rgba(11,42,122,0.07); color: var(--navy); border-color: rgba(11,42,122,0.4); }
 
-    /* Leaderboard dropdown */
+    /* Leaderboard dropdown — always a centred fixed overlay */
     #lb-dropdown {
-      width: 100%;
+      position: fixed; z-index: 8;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(92vw, 420px);
+      max-height: 80vh; overflow-y: auto;
       background: linear-gradient(150deg, #0a2570 0%, #0e3298 100%);
-      border-radius: 10px;
-      padding: 13px 15px;
+      border-radius: 12px;
+      padding: 16px 18px;
       box-sizing: border-box;
-      box-shadow: 0 6px 24px rgba(10,37,112,0.32);
+      box-shadow: 0 8px 40px rgba(10,37,112,0.45);
       animation: lb-appear 0.14s ease;
     }
     @keyframes lb-appear {
-      from { opacity: 0; transform: translateY(-5px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; transform: translate(-50%, -53%); }
+      to   { opacity: 1; transform: translate(-50%, -50%); }
     }
     .lb-d-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -161,6 +166,8 @@
     .lb-d-status { font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; padding: 12px 0; margin: 0; }
 
     @media (hover:none) and (pointer:coarse) {
+      html, body { overflow: hidden; height: 100%; min-height: unset; }
+      body { padding: 0; }
       canvas { pointer-events: none; }
     }
 
@@ -210,14 +217,6 @@
         height: min(94vw, calc(100vh - 215px));
         margin-top: 6px; max-width: none; max-height: none;
         border-radius: 3px;
-      }
-
-      #lb-dropdown {
-        position: fixed; z-index: 8;
-        left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
-        width: min(92vw, 360px);
-        max-height: 80vh; overflow-y: auto;
       }
 
       #leftJumpArea {
@@ -271,14 +270,6 @@
         padding: 0 8px; line-height: 1.3;
         color: var(--navy); pointer-events: none; text-align: center;
         box-sizing: border-box; background: none; letter-spacing: -0.3px;
-      }
-
-      #lb-dropdown {
-        position: fixed; z-index: 8;
-        left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
-        width: min(90vw, 380px);
-        max-height: 85vh; overflow-y: auto;
       }
 
       .tagline {
