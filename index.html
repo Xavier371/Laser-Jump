@@ -107,6 +107,7 @@
     }
     #player-tag.visible { display: flex; }
     #player-tag-name { font-weight: 700; color: var(--navy); }
+    #player-tag-name.anon { font-weight: 400; font-style: italic; color: #999; }
     #player-tag-edit {
       background: none; border: 1px solid rgba(11,42,122,0.2);
       color: #888; font-size: 11px; cursor: pointer;
@@ -448,7 +449,7 @@
     </div>
 
     <div id="player-tag">
-      Playing as <strong id="player-tag-name"></strong>
+      Playing as <span id="player-tag-name"></span>
       <button id="player-tag-edit" title="Change name">&#9998; Edit</button>
     </div>
 
@@ -612,6 +613,8 @@ function spawnCoin() {
 }
 
 document.addEventListener('keydown', e => {
+  const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+  if (!isInput && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
   if (gameOver && e.key === 'Enter' && nameModal.style.display !== 'block') { resetGame(); startGame(); return; }
   if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
   if ((e.key === ' ' || e.key === 'Spacebar') && !player.isJumping) {
@@ -936,13 +939,23 @@ document.addEventListener('click', e => {
 });
 
 /* — Player name persistence — */
-let savedName = localStorage.getItem('lj_player_name') || null;
+let savedName       = localStorage.getItem('lj_player_name') || null;
+let hasBeenPrompted = localStorage.getItem('lj_prompted') === 'true';
 
 function updatePlayerTag() {
-  const tag  = document.getElementById('player-tag');
+  const tag    = document.getElementById('player-tag');
   const nameEl = document.getElementById('player-tag-name');
-  nameEl.textContent = savedName || '';
-  tag.classList.toggle('visible', !!savedName);
+  if (savedName) {
+    nameEl.textContent = savedName;
+    nameEl.classList.remove('anon');
+    tag.classList.add('visible');
+  } else if (hasBeenPrompted) {
+    nameEl.textContent = 'Anonymous';
+    nameEl.classList.add('anon');
+    tag.classList.add('visible');
+  } else {
+    tag.classList.remove('visible');
+  }
 }
 updatePlayerTag();
 
@@ -960,11 +973,17 @@ let editingNameOnly = false;
 function showNameModal() {
   gameOverHandled = true;
   if (savedName) {
-    /* Already have a name — auto-submit silently */
     submitScore(savedName, score).then(() => { if (lbOpen) openLeaderboard(); });
     return;
   }
-  /* First time: ask for name */
+  if (hasBeenPrompted) {
+    /* Already asked once — use Anonymous silently */
+    submitScore('Anonymous', score).then(() => { if (lbOpen) openLeaderboard(); });
+    return;
+  }
+  /* First time ever — ask for name */
+  hasBeenPrompted = true;
+  localStorage.setItem('lj_prompted', 'true');
   nameModalTitle.textContent   = 'Game Over';
   nameModalScoreEl.textContent = 'Score: ' + score;
   nameModalCatEl.textContent   = categoryLabel();
@@ -1014,8 +1033,12 @@ playerNameInput.addEventListener('keydown', e => {
 
 skipScoreBtn.addEventListener('click', () => {
   nameModal.style.display = 'none';
+  if (!editingNameOnly) {
+    hasBeenPrompted = true;
+    localStorage.setItem('lj_prompted', 'true');
+    updatePlayerTag();
+  }
   editingNameOnly = false;
-  /* Score not saved, name not saved */
 });
 
 document.getElementById('player-tag-edit').addEventListener('click', openEditNameModal);
