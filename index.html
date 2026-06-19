@@ -533,7 +533,7 @@ speedSlider.addEventListener('input', () => {
   const step = parseInt(speedSlider.value);
   speedMult = speedSteps[step];
   speedValEl.textContent = speedLabels[step];
-  resetGame(); startGame();
+  resetGame(); runCountdown();
   if (lbOpen) openLeaderboard();
 });
 speedValEl.textContent = 'Normal';
@@ -587,11 +587,11 @@ function runCountdown() {
   })();
 }
 
-restartButton.addEventListener('click', () => { resetGame(); startGame(); restartButton.blur(); });
+restartButton.addEventListener('click', () => { resetGame(); runCountdown(); restartButton.blur(); });
 difficultyButton.addEventListener('click', () => {
   hardMode = !hardMode;
   difficultyButton.textContent = 'Mode: ' + (hardMode ? 'Hard' : 'Easy');
-  resetGame(); startGame();
+  resetGame(); runCountdown();
   if (lbOpen) openLeaderboard();
 });
 instructionsButton.addEventListener('click', () => { paused = true; instructionsModal.style.display = 'block'; });
@@ -615,7 +615,7 @@ function spawnCoin() {
 document.addEventListener('keydown', e => {
   const isInput = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
   if (!isInput && ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault();
-  if (gameOver && e.key === 'Enter' && nameModal.style.display !== 'block') { resetGame(); startGame(); return; }
+  if (gameOver && e.key === 'Enter' && nameModal.style.display !== 'block') { resetGame(); runCountdown(); return; }
   if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
   if ((e.key === ' ' || e.key === 'Spacebar') && !player.isJumping) {
     player.isJumping = true; player.jumpStartTime = Date.now(); player.color = 'lightblue';
